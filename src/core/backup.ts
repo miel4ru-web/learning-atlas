@@ -137,7 +137,8 @@ function isInteraction(v: unknown): v is Interaction {
     (v.response === undefined || typeof v.response === 'string') &&
     (v.selectedIndex === undefined ||
       (typeof v.selectedIndex === 'number' && v.selectedIndex >= 0)) &&
-    (v.policyVersion === undefined || typeof v.policyVersion === 'string')
+    (v.policyVersion === undefined || typeof v.policyVersion === 'string') &&
+    (v.pretest === undefined || typeof v.pretest === 'boolean')
   )
 }
 

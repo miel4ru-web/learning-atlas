@@ -5,7 +5,7 @@
 import { useState } from 'react'
 import type { Confidence, ErrorTag, Grade, InteractionSignals, Item } from '../core/types'
 import { useAtlas } from '../core/atlas'
-import { buildSession } from '../scheduler/session'
+import { buildSession, pickPretestItem } from '../scheduler/session'
 import { seedDeck, SEED_DECK_SIZE } from '../core/seedDeck'
 import { RespondPanel } from '../activities/RespondPanel'
 
@@ -18,6 +18,7 @@ export function StudyView() {
   const [confidence, setConfidence] = useState<Confidence | null>(null)
   const [budgetInput, setBudgetInput] = useState(String(DEFAULT_BUDGET_MIN))
   const [seeding, setSeeding] = useState(false)
+  const [pretestItemId, setPretestItemId] = useState<string | null>(null)
 
   // "카드" 화면 덱 필터에서 "이 카드로 학습 시작"을 눌렀으면 sessionScopeItemIds가
   // 차 있다 — buildSession의 후보 풀을 그 카드들로만 좁힌다. 세션 편성 로직
@@ -61,7 +62,17 @@ export function StudyView() {
       dailyReviewCap: studyPrefs.dailyReviewCap,
       vacationMode: studyPrefs.vacationMode,
     })
-    setSessionPlan(plan)
+
+    // 사전 테스트(v23)는 세션 맨 앞 한 장. 오늘 할 게 아예 없으면 붙이지 않는다
+    // — 빈 세션에 "아직 안 배운 문제"만 덜렁 내미는 건 학습이 아니라 훼방이다.
+    // 휴가 모드일 때도 붙이지 않는다(밀린 복습부터 갚는 게 그 모드의 목적).
+    const pretest =
+      plan.length > 0 && !studyPrefs.vacationMode
+        ? pickPretestItem(scopedPool, atlas.cardStates, atlas.eloState, atlas.kcs, atlas.pretestedIds)
+        : null
+
+    setSessionPlan(pretest ? [pretest, ...plan] : plan)
+    setPretestItemId(pretest?.id ?? null)
     setSessionIndex(0)
     setConfidence(null)
     atlas.clearSessionScope() // 한 번 쓰고 나면 다음 "오늘 학습 시작"은 다시 전체 풀로.
@@ -82,7 +93,10 @@ export function StudyView() {
     signals: InteractionSignals,
   ) {
     if (!current) return
-    await atlas.recordInteraction(current.id, grade, confidence, errorTag, signals)
+    await atlas.recordInteraction(current.id, grade, confidence, errorTag, {
+      ...signals,
+      pretest: current.id === pretestItemId,
+    })
     setConfidence(null)
     setSessionIndex((i) => i + 1)
   }
@@ -147,6 +161,15 @@ export function StudyView() {
         </div>
       ) : current ? (
         <div className="card">
+          {current.id === pretestItemId && (
+            <div className="pretest-note">
+              <span className="pretest-badge">사전 테스트</span>
+              <p className="muted">
+                아직 배우지 않은 내용입니다. 틀려도 기록에 반영되지 않으니 편하게 찍어 보세요 —
+                미리 한 번 틀려 보는 것만으로 나중에 배울 때 더 잘 붙습니다.
+              </p>
+            </div>
+          )}
           {currentKc && <span className="kc-badge">{currentKc.name}</span>}
           {confidence === null ? (
             <div className="confidence">

@@ -119,6 +119,13 @@ export interface Interaction {
   selectedIndex?: number
   /** 채점 당시 활성 스케줄러 파라미터 식별자 — 재적합 설정의 fittedAt, 기본값이면 'default'. */
   policyVersion?: string
+  /**
+   * 사전 테스트(Atlas 1부 "배우기 전에 틀려 보기", v23)로 낸 문항이었는가.
+   * true면 로그에는 남되 파생 학습 상태(FSRS·Elo·캘리브레이션·문항 품질)에서는
+   * 빠진다 — 아직 안 배운 걸 물어봤으니 틀린 게 카드나 학습자 탓이 아니다.
+   * core/interactions.ts의 isScored()가 이 구분을 한곳에서 담당한다.
+   */
+  pretest?: boolean
 }
 
 /**
@@ -129,6 +136,7 @@ export interface InteractionSignals {
   latencyMs?: number
   response?: string
   selectedIndex?: number
+  pretest?: boolean
 }
 
 /** Interaction 로그를 재생해 얻는 FSRS 파생 상태. DB에 저장하지 않는다. */

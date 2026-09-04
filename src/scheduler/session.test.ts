@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { CardState, EloState } from '../core/types'
-import { buildSession, findUrgentKcIds } from './session'
+import { buildSession, findUrgentKcIds, pickPretestItem } from './session'
 import { MASTERY_THETA } from './elo'
 import { cloze, flashcard, kc, mcq } from '../test/factories'
 
@@ -206,6 +206,75 @@ describe('buildSession', () => {
       vacationMode: true,
     })
     expect(plan.map((i) => i.id)).toEqual([review.id])
+  })
+})
+
+describe('pickPretestItem(v23)', () => {
+  const base = kc({ id: 'base' })
+  const locked = kc({ id: 'locked', prereqIds: ['base'] })
+  const readyElo: EloState = {
+    itemDifficulty: new Map(),
+    kcMastery: new Map([['base', MASTERY_THETA]]),
+  }
+
+  it('아직 열리지 않은 KC(선수지식 미달)의 카드를 고른다', () => {
+    const baseCard = flashcard({ kcId: 'base' })
+    const lockedCard = flashcard({ kcId: 'locked' })
+    const states = new Map([
+      [baseCard.id, state({ itemId: baseCard.id, state: 'new', reps: 0 })],
+      [lockedCard.id, state({ itemId: lockedCard.id, state: 'new', reps: 0 })],
+    ])
+    const picked = pickPretestItem([baseCard, lockedCard], states, emptyElo, [base, locked])
+    // base는 선수지식이 없어 이미 열려 있다 → 잠긴 locked 쪽이 사전 테스트 대상
+    expect(picked?.id).toBe(lockedCard.id)
+  })
+
+  it('모든 KC가 열려 있으면 사전 테스트는 없다', () => {
+    const lockedCard = flashcard({ kcId: 'locked' })
+    const states = new Map([[lockedCard.id, state({ itemId: lockedCard.id, state: 'new', reps: 0 })]])
+    expect(pickPretestItem([lockedCard], states, readyElo, [base, locked])).toBeNull()
+  })
+
+  it('이미 배우기 시작한 KC는 제외한다 — 그건 사전 테스트가 아니라 복습이다', () => {
+    const started = flashcard({ kcId: 'locked' })
+    const another = flashcard({ kcId: 'locked' })
+    const states = new Map([
+      [started.id, state({ itemId: started.id })], // 채점된 적 있음(state: 'review')
+      [another.id, state({ itemId: another.id, state: 'new', reps: 0 })],
+    ])
+    expect(pickPretestItem([started, another], states, emptyElo, [base, locked])).toBeNull()
+  })
+
+  it('이미 사전 테스트로 낸 카드는 다시 고르지 않는다', () => {
+    const first = flashcard({ kcId: 'locked' })
+    const second = flashcard({ kcId: 'locked' })
+    const states = new Map([
+      [first.id, state({ itemId: first.id, state: 'new', reps: 0 })],
+      [second.id, state({ itemId: second.id, state: 'new', reps: 0 })],
+    ])
+    const picked = pickPretestItem(
+      [first, second],
+      states,
+      emptyElo,
+      [base, locked],
+      new Set([first.id]),
+    )
+    expect(picked?.id).toBe(second.id)
+
+    const noneLeft = pickPretestItem(
+      [first, second],
+      states,
+      emptyElo,
+      [base, locked],
+      new Set([first.id, second.id]),
+    )
+    expect(noneLeft).toBeNull()
+  })
+
+  it('KC가 없는(분류 안 된) 카드는 대상이 아니다', () => {
+    const loose = flashcard({ kcId: null })
+    const states = new Map([[loose.id, state({ itemId: loose.id, state: 'new', reps: 0 })]])
+    expect(pickPretestItem([loose], states, emptyElo, [base, locked])).toBeNull()
   })
 })
 

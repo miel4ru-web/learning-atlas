@@ -287,6 +287,20 @@
   font-size: 0.85rem;
   color: var(--text-muted);
 }
+.pretest-note {
+  display: grid;
+  gap: 8px;
+  justify-items: center;
+  padding-bottom: 4px;
+}
+.pretest-note p { font-size: 0.82rem; max-width: 40ch; line-height: 1.55; margin: 0; }
+.pretest-badge {
+  font-size: 0.72rem;
+  padding: 2px 10px;
+  border-radius: 999px;
+  border: 1px dashed var(--hard);
+  color: var(--hard);
+}
 .empty-start { display: grid; gap: 10px; justify-items: center; }
 .seed-note { font-size: 0.8rem; max-width: 34ch; line-height: 1.5; }
 .seed-deck-block {

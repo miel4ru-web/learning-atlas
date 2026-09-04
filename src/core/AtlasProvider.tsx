@@ -9,6 +9,7 @@ import { deriveAllCardStates, isLeech, buildScheduler } from '../scheduler/fsrs'
 import { deriveEloState } from '../scheduler/elo'
 import { findUrgentKcIds } from '../scheduler/session'
 import { calibrationReport, calibrationWarning } from './calibration'
+import { pretestedItemIds, scoredOnly } from './interactions'
 import { AtlasContext, type AtlasData } from './atlas'
 
 function groupByItem(interactions: Interaction[]): Map<string, Interaction[]> {
@@ -62,13 +63,20 @@ export function AtlasProvider({ children }: { children: ReactNode }) {
   }, [reload])
 
   // 파생 상태 — 전부 Interaction 로그를 재생해서만 얻는다(DB에 저장하지 않음).
+  //
+  // 단 사전 테스트(v23)는 빼고 재생한다. 아직 안 배운 걸 물어본 채점이라 스케줄·
+  // 숙달도·캘리브레이션·문항 품질 어디에 넣어도 잘못된 결론이 된다. 구분은
+  // core/interactions.ts가 전담하므로 아래 계산들은 이 사실을 몰라도 된다.
+  // (원본 interactions는 그대로 남아 "오늘 몇 장 했나" 같은 활동 집계에 쓰인다.)
+  const scored = useMemo(() => scoredOnly(interactions), [interactions])
+
   const byItem = useMemo(() => {
-    const map = groupByItem(interactions)
+    const map = groupByItem(scored)
     for (const item of items) {
       if (!map.has(item.id)) map.set(item.id, [])
     }
     return map
-  }, [items, interactions])
+  }, [items, scored])
 
   // v3: 저장된 재적합 파라미터가 있으면 그 가중치(w)로, 없으면 FSRS-6 기본값으로.
   // v11(Atlas 5부): 목표 파지율은 전역 하나가 아니라 KC마다 다를 수 있다 —
@@ -110,10 +118,12 @@ export function AtlasProvider({ children }: { children: ReactNode }) {
     () => deriveAllCardStates(byItem, schedulerForItem),
     [byItem, schedulerForItem],
   )
-  const eloState = useMemo(() => deriveEloState(items, interactions), [items, interactions])
-  const latestByItem = useMemo(() => latestPerItem(interactions), [interactions])
+  const eloState = useMemo(() => deriveEloState(items, scored), [items, scored])
+  const latestByItem = useMemo(() => latestPerItem(scored), [scored])
   const urgentKcIds = useMemo(() => findUrgentKcIds(items, latestByItem), [items, latestByItem])
-  const calibration = useMemo(() => calibrationReport(interactions), [interactions])
+  const calibration = useMemo(() => calibrationReport(scored), [scored])
+  // 사전 테스트로 이미 낸 카드 — 같은 걸 매 세션 반복해 들이밀지 않기 위해.
+  const pretestedIds = useMemo(() => pretestedItemIds(interactions), [interactions])
   const calibrationNote = useMemo(() => calibrationWarning(calibration), [calibration])
 
   // leech 판정은 CardState가 아니라 아이템별 원본 Interaction 목록으로 한다
@@ -266,6 +276,7 @@ export function AtlasProvider({ children }: { children: ReactNode }) {
       leechItemIds,
       dueCount,
       kcById,
+      pretestedIds,
       sessionScopeItemIds,
       setSessionScope,
       clearSessionScope,
@@ -304,6 +315,7 @@ export function AtlasProvider({ children }: { children: ReactNode }) {
       leechItemIds,
       dueCount,
       kcById,
+      pretestedIds,
       sessionScopeItemIds,
       setSessionScope,
       clearSessionScope,

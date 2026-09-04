@@ -50,6 +50,8 @@ export interface AtlasData {
   leechItemIds: ReadonlySet<string>
   dueCount: number
   kcById: ReadonlyMap<string, KnowledgeComponent>
+  /** 사전 테스트(v23)로 이미 낸 적 있는 아이템 — 같은 카드를 반복해 내지 않으려고 본다. */
+  pretestedIds: ReadonlySet<string>
 
   // ---- 세션 범위(휘발성 UI 상태 — DB에 저장하지 않는다, 새로고침하면 사라짐) ----
   // "카드" 화면의 덱 필터 결과로 학습 세션을 시작할 때만 쓴다. null이면 평소처럼

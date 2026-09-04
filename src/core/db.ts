@@ -183,6 +183,7 @@ export async function recordInteraction(
   if (signals.response !== undefined) interaction.response = signals.response
   if (signals.selectedIndex !== undefined) interaction.selectedIndex = signals.selectedIndex
   if (signals.policyVersion !== undefined) interaction.policyVersion = signals.policyVersion
+  if (signals.pretest) interaction.pretest = true // false는 굳이 남기지 않는다(기본값)
 
   const db = await getDB()
   await db.add('interactions', interaction)

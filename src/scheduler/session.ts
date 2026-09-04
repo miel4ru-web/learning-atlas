@@ -232,6 +232,53 @@ export function buildSession(
 }
 
 /**
+ * 사전 테스트 한 장 고르기(Atlas 1부 "배우기 전에 틀려 보는 것이 후속 학습을
+ * 강화한다", 4.4 with_pretest_and_warmup).
+ *
+ * 대상은 **아직 열리지 않은 KC**의 카드다. 선수지식 게이팅(3.3 ready) 때문에
+ * 그런 카드는 평소엔 세션에 절대 나오지 않는데, 바로 그래서 사전 노출의 자리가
+ * 여기다 — 곧 배울 내용을 한 장 미리 틀려 보는 것. 이미 배우기 시작한 KC(채점된
+ * 카드가 하나라도 있는 KC)는 제외한다. 그건 사전 테스트가 아니라 그냥 복습이다.
+ *
+ * 고른 카드의 채점은 로그에 pretest 표시와 함께 남고, 파생 상태 계산에서는
+ * 빠진다(core/interactions.ts) — "오답이어도 페널티 없음"이 그 뜻이다.
+ *
+ * 후보가 없으면 null. 여러 KC가 잠겨 있으면 넘겨받은 kcs 배열의 앞쪽을 고른다
+ * (앱에서는 IndexedDB가 돌려주는 id 순). 어느 걸 먼저 맛보여도 학습 효과는 크게
+ * 다르지 않아, 매번 같은 결과가 나오는 쪽을 택했다.
+ */
+export function pickPretestItem(
+  items: Item[],
+  cardStates: ReadonlyMap<string, CardState>,
+  eloState: EloState,
+  kcs: KnowledgeComponent[],
+  pretestedItemIds: ReadonlySet<string> = new Set(),
+): Item | null {
+  const itemsByKc = new Map<string, Item[]>()
+  for (const item of items) {
+    if (item.kcId === null) continue
+    const list = itemsByKc.get(item.kcId)
+    if (list) list.push(item)
+    else itemsByKc.set(item.kcId, [item])
+  }
+
+  for (const kc of kcs) {
+    if (isReady(kc, eloState.kcMastery)) continue // 이미 열린 KC — 정규 세션에서 다룬다
+    const candidates = itemsByKc.get(kc.id) ?? []
+    const alreadyStarted = candidates.some((item) => {
+      const state = cardStates.get(item.id)
+      return state !== undefined && state.state !== 'new'
+    })
+    if (alreadyStarted) continue
+
+    const fresh = candidates.find((item) => !pretestedItemIds.has(item.id))
+    if (fresh) return fresh
+  }
+
+  return null
+}
+
+/**
  * urgentKcIds 계산: 각 KC에 대해 "그 KC를 가진 아이템들 중 가장 최근 Interaction"이
  * concept 오답이었는지 본다. AtlasProvider가 interactions를 들고 있으니 거기서
  * 이 순수 함수로 뽑아 buildSession에 넘긴다.
