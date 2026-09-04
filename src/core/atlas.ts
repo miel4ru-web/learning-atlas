@@ -19,6 +19,7 @@ import type {
   KnowledgeComponent,
   NewItem,
   SchedulerSettings,
+  StudyPrefs,
 } from './types'
 import type { CalibrationBucket } from './calibration'
 import type { OptimizeResult } from '../scheduler/optimizer'
@@ -32,6 +33,8 @@ export interface AtlasData {
   interactions: Interaction[]
   kcs: KnowledgeComponent[]
   schedulerSettings: SchedulerSettings | undefined
+  /** 백로그 상한·휴가 모드(Atlas 3.1, v18). 저장된 게 없으면 무제한/평소대로. */
+  studyPrefs: StudyPrefs | undefined
 
   // ---- 파생(Interaction 로그 재생 — 저장 안 함) ----
   byItem: ReadonlyMap<string, Interaction[]>
@@ -64,6 +67,7 @@ export interface AtlasData {
   deleteItem: (itemId: string) => Promise<void>
   bulkSetKc: (itemIds: readonly string[], kcId: string | null) => Promise<void>
   bulkDeleteItems: (itemIds: readonly string[]) => Promise<void>
+  saveStudyPrefs: (prefs: StudyPrefs) => Promise<void>
   recordInteraction: (
     itemId: string,
     grade: Grade,

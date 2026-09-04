@@ -29,7 +29,7 @@ function scenario(): DbSnapshot {
     ...grades.map((g, i) => interaction('b', g === 'again' ? 'good' : g, i + 0.5)),
     ...grades.map((g, i) => interaction('c', g, i + 0.25)),
   ]
-  return { items: [a, b, c], interactions, kcs: [], schedulerSettings: null }
+  return { items: [a, b, c], interactions, kcs: [], schedulerSettings: null, studyPrefs: null }
 }
 
 function shuffle<T>(arr: T[], seed: number): T[] {

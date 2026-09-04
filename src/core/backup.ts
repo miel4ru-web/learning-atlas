@@ -14,6 +14,7 @@ import type {
   Item,
   KnowledgeComponent,
   SchedulerSettings,
+  StudyPrefs,
 } from './types'
 
 export const BACKUP_FORMAT = 'learning-atlas-backup'
@@ -34,6 +35,7 @@ export interface BackupSummary {
   interactions: number
   kcs: number
   hasSettings: boolean
+  hasStudyPrefs: boolean
   exportedAt: string
 }
 
@@ -145,6 +147,14 @@ function isSchedulerSettings(v: unknown): v is SchedulerSettings {
   )
 }
 
+function isStudyPrefs(v: unknown): v is StudyPrefs {
+  return (
+    isObject(v) &&
+    (v.dailyReviewCap === null || (typeof v.dailyReviewCap === 'number' && v.dailyReviewCap >= 0)) &&
+    typeof v.vacationMode === 'boolean'
+  )
+}
+
 export function parseBackup(text: string): ParseResult {
   let raw: unknown
   try {
@@ -189,6 +199,10 @@ export function parseBackup(text: string): ParseResult {
   if (settings != null && !isSchedulerSettings(settings)) {
     return { ok: false, error: '스케줄러 설정(schedulerSettings)의 형태가 올바르지 않습니다.' }
   }
+  const studyPrefs = data.studyPrefs
+  if (studyPrefs != null && !isStudyPrefs(studyPrefs)) {
+    return { ok: false, error: '백로그·휴가 모드 설정(studyPrefs)의 형태가 올바르지 않습니다.' }
+  }
 
   // 참조 무결성: 로그가 가리키는 itemId가 카드 목록에 있어야 재생이 성립한다.
   const itemIds = new Set(data.items.map((it) => it.id))
@@ -201,6 +215,7 @@ export function parseBackup(text: string): ParseResult {
     interactions: data.interactions,
     kcs: data.kcs,
     schedulerSettings: (settings as SchedulerSettings | null | undefined) ?? null,
+    studyPrefs: (studyPrefs as StudyPrefs | null | undefined) ?? null,
   }
   return {
     ok: true,
@@ -210,6 +225,7 @@ export function parseBackup(text: string): ParseResult {
       interactions: snapshot.interactions.length,
       kcs: snapshot.kcs.length,
       hasSettings: snapshot.schedulerSettings !== null,
+      hasStudyPrefs: snapshot.studyPrefs !== null,
       exportedAt: typeof raw.exportedAt === 'string' ? raw.exportedAt : '',
     },
   }

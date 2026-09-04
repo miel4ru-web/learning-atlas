@@ -7,7 +7,13 @@ import * as db from './db'
 import type { DbSnapshot } from './db'
 import { flashcard, mcq, kc, interaction } from '../test/factories'
 
-const EMPTY: DbSnapshot = { items: [], interactions: [], kcs: [], schedulerSettings: null }
+const EMPTY: DbSnapshot = {
+  items: [],
+  interactions: [],
+  kcs: [],
+  schedulerSettings: null,
+  studyPrefs: null,
+}
 
 beforeEach(async () => {
   await db.importAll(EMPTY, 'replace')
@@ -117,6 +123,7 @@ describe('KC 삭제', () => {
           kc({ id: 'adv', prereqIds: ['base'] }),
         ],
         schedulerSettings: null,
+        studyPrefs: null,
       },
       'replace',
     )
@@ -141,6 +148,7 @@ describe('exportAll / importAll', () => {
     interactions: [interaction('i1', 'good', 0), interaction('i1', 'again', 1)],
     kcs: [kc({ id: 'k1' })],
     schedulerSettings: null,
+    studyPrefs: null,
   }
 
   it('replace로 넣은 뒤 export하면 그대로 나온다', async () => {
@@ -177,5 +185,26 @@ describe('exportAll / importAll', () => {
     await db.importAll({ ...EMPTY, schedulerSettings: settings }, 'replace')
     expect(await db.getSchedulerSettings()).toEqual(settings)
     expect((await db.exportAll()).schedulerSettings).toEqual(settings)
+  })
+
+  it('백로그/휴가 모드 설정(studyPrefs) 왕복(v18)', async () => {
+    const prefs = { dailyReviewCap: 30, vacationMode: true }
+    await db.importAll({ ...EMPTY, studyPrefs: prefs }, 'replace')
+    expect(await db.getStudyPrefs()).toEqual(prefs)
+    expect((await db.exportAll()).studyPrefs).toEqual(prefs)
+  })
+})
+
+describe('studyPrefs(v18)', () => {
+  it('저장 전엔 undefined', async () => {
+    expect(await db.getStudyPrefs()).toBeUndefined()
+  })
+
+  it('saveStudyPrefs로 저장하고 덮어쓸 수 있다', async () => {
+    await db.saveStudyPrefs({ dailyReviewCap: 20, vacationMode: false })
+    expect(await db.getStudyPrefs()).toEqual({ dailyReviewCap: 20, vacationMode: false })
+
+    await db.saveStudyPrefs({ dailyReviewCap: null, vacationMode: true })
+    expect(await db.getStudyPrefs()).toEqual({ dailyReviewCap: null, vacationMode: true })
   })
 })

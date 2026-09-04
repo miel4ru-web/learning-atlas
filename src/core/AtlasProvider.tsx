@@ -35,21 +35,24 @@ export function AtlasProvider({ children }: { children: ReactNode }) {
   const [interactions, setInteractions] = useState<Interaction[]>([])
   const [kcs, setKcs] = useState<db.DbSnapshot['kcs']>([])
   const [schedulerSettings, setSchedulerSettings] = useState<db.DbSnapshot['schedulerSettings']>(null)
+  const [studyPrefs, setStudyPrefs] = useState<db.DbSnapshot['studyPrefs']>(null)
   const [loading, setLoading] = useState(true)
   const [now, setNow] = useState(() => new Date())
   const [sessionScopeItemIds, setSessionScopeItemIds] = useState<ReadonlySet<string> | null>(null)
 
   const reload = useCallback(async () => {
-    const [allItems, allInteractions, allKcs, settings] = await Promise.all([
+    const [allItems, allInteractions, allKcs, settings, prefs] = await Promise.all([
       db.getAllItems(),
       db.getAllInteractions(),
       db.getAllKCs(),
       db.getSchedulerSettings(),
+      db.getStudyPrefs(),
     ])
     setItems(allItems)
     setInteractions(allInteractions)
     setKcs(allKcs)
     setSchedulerSettings(settings ?? null)
+    setStudyPrefs(prefs ?? null)
     setLoading(false)
     setNow(new Date())
   }, [])
@@ -198,6 +201,13 @@ export function AtlasProvider({ children }: { children: ReactNode }) {
     },
     [reload],
   )
+  const saveStudyPrefs = useCallback<AtlasData['saveStudyPrefs']>(
+    async (prefs) => {
+      await db.saveStudyPrefs(prefs)
+      await reload()
+    },
+    [reload],
+  )
   const recordInteraction = useCallback<AtlasData['recordInteraction']>(
     async (itemId, grade, confidence, errorTag) => {
       await db.recordInteraction(itemId, grade, confidence, errorTag)
@@ -238,6 +248,7 @@ export function AtlasProvider({ children }: { children: ReactNode }) {
       interactions,
       kcs,
       schedulerSettings: schedulerSettings ?? undefined,
+      studyPrefs: studyPrefs ?? undefined,
       byItem,
       activeScheduler,
       cardStates,
@@ -262,6 +273,7 @@ export function AtlasProvider({ children }: { children: ReactNode }) {
       deleteItem,
       bulkSetKc,
       bulkDeleteItems,
+      saveStudyPrefs,
       recordInteraction,
       applyRefit,
       resetScheduler,
@@ -274,6 +286,7 @@ export function AtlasProvider({ children }: { children: ReactNode }) {
       interactions,
       kcs,
       schedulerSettings,
+      studyPrefs,
       byItem,
       activeScheduler,
       cardStates,
@@ -298,6 +311,7 @@ export function AtlasProvider({ children }: { children: ReactNode }) {
       deleteItem,
       bulkSetKc,
       bulkDeleteItems,
+      saveStudyPrefs,
       recordInteraction,
       applyRefit,
       resetScheduler,

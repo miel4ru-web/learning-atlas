@@ -12,6 +12,7 @@ function snapshot(): DbSnapshot {
     interactions: [interaction(a.id, 'good', 0), interaction(a.id, 'again', 1, { confidence: 3 })],
     kcs: [kc({ id: 'kc-1', requestRetention: 0.95 })],
     schedulerSettings: null,
+    studyPrefs: null,
   }
 }
 
@@ -70,6 +71,20 @@ describe('parseBackup 거부 케이스', () => {
     const f = ok()
     f.data.items[2].acceptedAnswers = []
     expect(parseBackup(JSON.stringify(f))).toMatchObject({ ok: false })
+  })
+  it('studyPrefs(v18)가 있으면 왕복되고, 형태가 깨졌으면 거부', () => {
+    const f = ok()
+    f.data.studyPrefs = { dailyReviewCap: 25, vacationMode: false }
+    const result = parseBackup(JSON.stringify(f))
+    expect(result).toMatchObject({ ok: true })
+    if (result.ok) {
+      expect(result.snapshot.studyPrefs).toEqual({ dailyReviewCap: 25, vacationMode: false })
+      expect(result.summary.hasStudyPrefs).toBe(true)
+    }
+
+    const broken = ok()
+    broken.data.studyPrefs = { dailyReviewCap: 'many', vacationMode: false }
+    expect(parseBackup(JSON.stringify(broken))).toMatchObject({ ok: false })
   })
   it('로그가 존재하지 않는 카드를 가리키면(참조 무결성)', () => {
     const f = ok()

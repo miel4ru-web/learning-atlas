@@ -26,6 +26,21 @@ export interface SessionOptions {
    * 끌고 오지 않기 위해서다.
    */
   leechItemIds?: ReadonlySet<string>
+  /**
+   * 백로그 정책(Atlas 3.1): 만기 복습이 아무리 많아도 오늘 후보로는 이 개수까지만
+   * 삼는다(정렬 후 상위 N). 나머지는 버려지지 않는다 — cardStates가 그대로라
+   * 다음 세션에서 다시 후보가 되고, 매번 같은 상한을 적용하면 며칠에 걸쳐
+   * 자연히 상환된다(별도 "상환 스케줄"을 저장할 필요가 없다). null/undefined면
+   * 무제한(기존 동작).
+   */
+  dailyReviewCap?: number | null
+  /**
+   * 휴가 모드(Atlas 3.1): true면 신규(미채점) 카드를 후보에서 아예 뺀다.
+   * 복귀 직후엔 밀린 복습부터 갚는 게 우선이라는 문서의 결론 — "부재 기간을
+   * 모델에 알리는" 별도 장치가 필요한 게 아니라, 상환 램프(dailyReviewCap)와
+   * 신규 도입 정지 두 가지면 충분하다.
+   */
+  vacationMode?: boolean
 }
 
 const DEFAULT_COST_PER_CARD_MIN = 0.75
@@ -51,6 +66,9 @@ function isReady(kc: KnowledgeComponent | undefined, mastery: Map<string, number
  *    멈추면 그 자체로 파지가 끊긴다.
  * 4. 예산이 허용하는 한, 같은 KC가 maxConsecutiveSameKc회 연속되지 않도록
  *    건너뛰며 담는다(뒤로 미룰 뿐 버리지 않음 — 다음 세션에서 다시 후보가 된다).
+ * 5. dailyReviewCap(3.1 백로그 정책)이 있으면 정렬된 복습 후보 중 상위 N개만
+ *    남긴다 — 밀린 게 아무리 많아도 하루에 다 쏟지 않는다. vacationMode면
+ *    신규 카드는 아예 후보에서 뺀다.
  */
 export function buildSession(
   items: Item[],
@@ -95,7 +113,11 @@ export function buildSession(
   })
   fresh.sort((a, b) => a.createdAt.localeCompare(b.createdAt))
 
-  const ranked = [...reviews, ...fresh] // 복습 우선(4부): 신규는 남은 예산 안에서만
+  const cappedReviews =
+    options.dailyReviewCap != null ? reviews.slice(0, options.dailyReviewCap) : reviews
+  const rankedFresh = options.vacationMode ? [] : fresh
+
+  const ranked = [...cappedReviews, ...rankedFresh] // 복습 우선(4부): 신규는 남은 예산 안에서만
   const plan: Item[] = []
   let budgetLeft = options.budgetMinutes
   let lastKc: string | null = null

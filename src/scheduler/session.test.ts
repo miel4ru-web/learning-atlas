@@ -99,6 +99,43 @@ describe('buildSession', () => {
       expect(run).toBeLessThanOrEqual(2)
     }
   })
+
+  it('dailyReviewCap: 밀린 복습이 많아도 상위 N개만 오늘 후보가 된다', () => {
+    const items = Array.from({ length: 10 }, () => flashcard())
+    const states = new Map(items.map((i) => [i.id, state({ itemId: i.id })]))
+    const plan = buildSession(items, states, emptyElo, [], NOW, {
+      budgetMinutes: 60, // 예산은 10장을 다 담고도 남을 만큼 넉넉함
+      dailyReviewCap: 3,
+    })
+    expect(plan.length).toBe(3)
+  })
+
+  it('dailyReviewCap이 없으면(기본) 예산이 허용하는 만큼 전부 담는다', () => {
+    const items = Array.from({ length: 10 }, () => flashcard())
+    const states = new Map(items.map((i) => [i.id, state({ itemId: i.id })]))
+    const plan = buildSession(items, states, emptyElo, [], NOW, { budgetMinutes: 60 })
+    expect(plan.length).toBe(10)
+  })
+
+  it('vacationMode: 신규 카드는 선수지식이 충족돼도 후보에서 빠진다', () => {
+    const newCard = flashcard({ kcId: null })
+    const states = new Map([[newCard.id, state({ itemId: newCard.id, state: 'new', reps: 0 })]])
+    const plan = buildSession([newCard], states, emptyElo, [], NOW, {
+      budgetMinutes: 60,
+      vacationMode: true,
+    })
+    expect(plan).toHaveLength(0)
+  })
+
+  it('vacationMode에도 복습(만기)은 그대로 나온다', () => {
+    const review = flashcard()
+    const states = new Map([[review.id, state({ itemId: review.id })]])
+    const plan = buildSession([review], states, emptyElo, [], NOW, {
+      budgetMinutes: 60,
+      vacationMode: true,
+    })
+    expect(plan.map((i) => i.id)).toEqual([review.id])
+  })
 })
 
 describe('findUrgentKcIds', () => {

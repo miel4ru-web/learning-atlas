@@ -133,3 +133,15 @@ export interface SchedulerSettings {
   testLossBefore: number
   testLossAfter: number
 }
+
+/**
+ * 백로그·휴가 모드 설정(Atlas 3.1, v18). SchedulerSettings와 달리 FSRS
+ * 파라미터가 아니라 세션 편성 정책이라 별도 레코드로 둔다(단일 레코드, 선택
+ * — 없으면 무제한/평소대로).
+ */
+export interface StudyPrefs {
+  /** 정렬된 만기 복습 후보 중 오늘 세션에 넣을 상한. null이면 무제한. */
+  dailyReviewCap: number | null
+  /** true면 신규(미채점) 카드를 세션 후보에서 뺀다 — 밀린 복습부터 갚는다. */
+  vacationMode: boolean
+}

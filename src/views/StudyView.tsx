@@ -23,12 +23,33 @@ export function StudyView() {
   const scope = atlas.sessionScopeItemIds
   const scopedPool = scope ? atlas.items.filter((item) => scope.has(item.id)) : atlas.items
 
+  // 백로그/휴가 모드(Atlas 3.1, v18) — DB에 저장돼 있으면 그대로, 없으면 기본값
+  // (무제한·평소대로). CardsView의 KC 목표 파지율 select와 같은 패턴: 로컬
+  // 미러 없이 atlas.studyPrefs를 그대로 읽고 바뀔 때마다 바로 저장한다.
+  const studyPrefs = atlas.studyPrefs ?? { dailyReviewCap: null, vacationMode: false }
+  const [dailyCapInput, setDailyCapInput] = useState(
+    studyPrefs.dailyReviewCap != null ? String(studyPrefs.dailyReviewCap) : '',
+  )
+
+  function commitDailyCap() {
+    const trimmed = dailyCapInput.trim()
+    const cap = trimmed === '' ? null : Math.max(0, Math.trunc(Number(trimmed)) || 0)
+    setDailyCapInput(cap != null ? String(cap) : '')
+    if (cap !== studyPrefs.dailyReviewCap) atlas.saveStudyPrefs({ ...studyPrefs, dailyReviewCap: cap })
+  }
+
+  function toggleVacationMode() {
+    atlas.saveStudyPrefs({ ...studyPrefs, vacationMode: !studyPrefs.vacationMode })
+  }
+
   function startSession() {
     const minutes = Math.max(1, Number(budgetInput) || DEFAULT_BUDGET_MIN)
     const plan = buildSession(scopedPool, atlas.cardStates, atlas.eloState, atlas.kcs, atlas.now, {
       budgetMinutes: minutes,
       urgentKcIds: atlas.urgentKcIds,
       leechItemIds: atlas.leechItemIds,
+      dailyReviewCap: studyPrefs.dailyReviewCap,
+      vacationMode: studyPrefs.vacationMode,
     })
     setSessionPlan(plan)
     setSessionIndex(0)
@@ -74,6 +95,26 @@ export function StudyView() {
             />
             분
           </label>
+
+          <div className="study-prefs">
+            <label className="vacation-toggle">
+              <input type="checkbox" checked={studyPrefs.vacationMode} onChange={toggleVacationMode} />
+              휴가 모드 — 신규 카드 도입 중지, 밀린 복습만
+            </label>
+            <label>
+              하루 복습 상한
+              <input
+                type="number"
+                min={0}
+                placeholder="무제한"
+                value={dailyCapInput}
+                onChange={(e) => setDailyCapInput(e.target.value)}
+                onBlur={commitDailyCap}
+              />
+              장
+            </label>
+          </div>
+
           <button className="start" onClick={startSession} disabled={atlas.items.length === 0}>
             오늘 학습 시작
           </button>

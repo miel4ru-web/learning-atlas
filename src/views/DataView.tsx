@@ -83,6 +83,7 @@ export function DataView() {
             <strong>{preview.summary.interactions}</strong> · 지식 요소{' '}
             <strong>{preview.summary.kcs}</strong>
             {preview.summary.hasSettings && ' · 스케줄러 설정 포함'}
+            {preview.summary.hasStudyPrefs && ' · 백로그/휴가 설정 포함'}
           </p>
           {preview.summary.exportedAt && (
             <p className="muted">

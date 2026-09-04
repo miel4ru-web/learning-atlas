@@ -1,6 +1,7 @@
 // IndexedDB 접근 계층. items·kcs(카드/지식요소 정의, 편집 가능), interactions
-// (채점 로그, append-only — core/types.ts 주석 참고), settings(재적합된
-// 스케줄러 파라미터 — 단일 레코드, 없으면 FSRS 기본값 사용).
+// (채점 로그, append-only — core/types.ts 주석 참고), settings(키별로 다른
+// 단일 레코드 두 개를 둔 out-of-line 스토어 — 재적합된 스케줄러 파라미터와
+// v18 백로그/휴가 모드 설정. 둘 다 없으면 각자의 기본값을 쓴다).
 
 import { openDB, type DBSchema, type IDBPDatabase } from 'idb'
 import type {
@@ -12,6 +13,7 @@ import type {
   ErrorTag,
   KnowledgeComponent,
   SchedulerSettings,
+  StudyPrefs,
 } from './types'
 
 interface AtlasDB extends DBSchema {
@@ -30,11 +32,12 @@ interface AtlasDB extends DBSchema {
   }
   settings: {
     key: string
-    value: SchedulerSettings
+    value: SchedulerSettings | StudyPrefs
   }
 }
 
 const SCHEDULER_SETTINGS_KEY = 'scheduler'
+const STUDY_PREFS_KEY = 'studyPrefs'
 
 // 현재 IndexedDB 스키마 버전. 백업 파일에도 같이 적어(core/backup.ts) 다른
 // 버전에서 만든 파일을 가져오려 할 때 걸러낸다.
@@ -242,7 +245,8 @@ export async function getAllKCs(): Promise<KnowledgeComponent[]> {
 
 export async function getSchedulerSettings(): Promise<SchedulerSettings | undefined> {
   const db = await getDB()
-  return db.get('settings', SCHEDULER_SETTINGS_KEY)
+  const v = await db.get('settings', SCHEDULER_SETTINGS_KEY)
+  return v as SchedulerSettings | undefined
 }
 
 export async function saveSchedulerSettings(settings: SchedulerSettings): Promise<void> {
@@ -253,6 +257,17 @@ export async function saveSchedulerSettings(settings: SchedulerSettings): Promis
 export async function clearSchedulerSettings(): Promise<void> {
   const db = await getDB()
   await db.delete('settings', SCHEDULER_SETTINGS_KEY)
+}
+
+export async function getStudyPrefs(): Promise<StudyPrefs | undefined> {
+  const db = await getDB()
+  const v = await db.get('settings', STUDY_PREFS_KEY)
+  return v as StudyPrefs | undefined
+}
+
+export async function saveStudyPrefs(prefs: StudyPrefs): Promise<void> {
+  const db = await getDB()
+  await db.put('settings', prefs, STUDY_PREFS_KEY)
 }
 
 // 4부 검증 체크리스트: 로그를 지우고 재생해도 같은 스케줄이 나와야 한다.
@@ -275,6 +290,7 @@ export interface DbSnapshot {
   interactions: Interaction[]
   kcs: KnowledgeComponent[]
   schedulerSettings: SchedulerSettings | null
+  studyPrefs: StudyPrefs | null
 }
 
 export type ImportMode = 'replace' | 'merge'
@@ -288,15 +304,22 @@ export async function exportAll(): Promise<DbSnapshot> {
   const interactions = await tx.objectStore('interactions').getAll()
   const kcs = await tx.objectStore('kcs').getAll()
   const schedulerSettings = await tx.objectStore('settings').get(SCHEDULER_SETTINGS_KEY)
+  const studyPrefs = await tx.objectStore('settings').get(STUDY_PREFS_KEY)
   await tx.done
-  return { items, interactions, kcs, schedulerSettings: schedulerSettings ?? null }
+  return {
+    items,
+    interactions,
+    kcs,
+    schedulerSettings: (schedulerSettings as SchedulerSettings) ?? null,
+    studyPrefs: (studyPrefs as StudyPrefs) ?? null,
+  }
 }
 
 /**
  * merge: id가 겹치면 들어오는 레코드가 이긴다(put). 같은 백업을 두 번 넣어도
- *        결과가 같다(멱등). schedulerSettings는 파일에 있을 때만 덮어쓴다.
+ *        결과가 같다(멱등). schedulerSettings/studyPrefs는 파일에 있을 때만 덮어쓴다.
  * replace: 네 스토어를 먼저 비우고 파일 내용만 남긴다. 파일에 설정이 없으면
- *          기존 재적합 설정도 사라진다(= FSRS 기본값으로 복귀).
+ *          기존 재적합 설정·백로그 설정도 사라진다(= 각자 기본값으로 복귀).
  */
 export async function importAll(snapshot: DbSnapshot, mode: ImportMode): Promise<void> {
   const db = await getDB()
@@ -318,6 +341,9 @@ export async function importAll(snapshot: DbSnapshot, mode: ImportMode): Promise
   for (const kc of snapshot.kcs) await kcs.put(kc)
   if (snapshot.schedulerSettings) {
     await settings.put(snapshot.schedulerSettings, SCHEDULER_SETTINGS_KEY)
+  }
+  if (snapshot.studyPrefs) {
+    await settings.put(snapshot.studyPrefs, STUDY_PREFS_KEY)
   }
   await tx.done
 }

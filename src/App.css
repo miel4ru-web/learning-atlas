@@ -281,6 +281,13 @@
   font: inherit;
   text-align: center;
 }
+.study-prefs {
+  display: grid;
+  gap: 8px;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+.vacation-toggle { justify-content: center; }
 .start {
   padding: 12px 24px;
   border-radius: 8px;
