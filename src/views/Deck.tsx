@@ -47,8 +47,14 @@ export function Deck({ editingId, onEdit }: Props) {
     now,
     deleteItem,
     setSessionScope,
+    bulkSetKc,
+    bulkDeleteItems,
   } = useAtlas()
   const [filter, setFilter] = useState<DeckFilter>(emptyFilter)
+  // 선택은 필터가 바뀌어도 유지한다(필터를 좁혀 고르는 중일 수 있어서) — 화면에서
+  // 잠깐 안 보여도 "선택 N장" 카운트에는 계속 잡힌다. 일괄 작업을 실행하면 비운다.
+  const [selected, setSelected] = useState<Set<string>>(new Set())
+  const [bulkKcId, setBulkKcId] = useState('') // '' = 분류 없음(ItemForm의 kcId select와 같은 규약)
 
   // 필터가 걸어둔 KC가 삭제되면(kcs에서 사라짐) 필터를 조용히 'all'로 되돌린다 —
   // 안 그러면 select는 빈 값으로 보이는데 필터는 죽은 id와 계속 비교해 카드가
@@ -83,6 +89,40 @@ export function Deck({ editingId, onEdit }: Props) {
   function startScopedSession() {
     setSessionScope(filtered.map((item) => item.id))
     window.location.hash = 'study'
+  }
+
+  function toggleSelect(id: string) {
+    setSelected((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
+  const allFilteredSelected = filtered.length > 0 && filtered.every((item) => selected.has(item.id))
+
+  function toggleSelectAllFiltered() {
+    setSelected((prev) => {
+      const next = new Set(prev)
+      for (const item of filtered) {
+        if (allFilteredSelected) next.delete(item.id)
+        else next.add(item.id)
+      }
+      return next
+    })
+  }
+
+  async function applyBulkKc() {
+    await bulkSetKc([...selected], bulkKcId || null)
+    setSelected(new Set())
+    setBulkKcId('')
+  }
+
+  async function applyBulkDelete() {
+    if (!window.confirm(`선택한 카드 ${selected.size}장을 삭제할까요? 되돌릴 수 없습니다.`)) return
+    await bulkDeleteItems([...selected])
+    setSelected(new Set())
   }
 
   function toggleType(t: ItemType) {
@@ -173,10 +213,39 @@ export function Deck({ editingId, onEdit }: Props) {
         )}
       </p>
 
+      {selected.size > 0 && (
+        <div className="deck-bulk-bar">
+          <span className="deck-bulk-count">선택 {selected.size}장</span>
+          <select value={bulkKcId} onChange={(e) => setBulkKcId(e.target.value)}>
+            <option value="">분류 없음</option>
+            {kcs.map((kc) => (
+              <option key={kc.id} value={kc.id}>
+                {kc.name}
+              </option>
+            ))}
+          </select>
+          <button type="button" className="reveal" onClick={applyBulkKc}>
+            분류 적용
+          </button>
+          <button type="button" className="delete deck-bulk-delete" onClick={applyBulkDelete}>
+            선택 삭제
+          </button>
+          <button type="button" className="reveal" onClick={() => setSelected(new Set())}>
+            선택 해제
+          </button>
+        </div>
+      )}
+
       {filtered.length === 0 ? (
         <p className="muted">{active ? '조건에 맞는 카드가 없습니다.' : '아직 카드가 없습니다.'}</p>
       ) : (
         <ul>
+          <li className="deck-select-all">
+            <label>
+              <input type="checkbox" checked={allFilteredSelected} onChange={toggleSelectAllFiltered} />
+              전체 선택
+            </label>
+          </li>
           {filtered.map((item) => {
             const state = cardStates.get(item.id)
             const kc = item.kcId ? kcById.get(item.kcId) : undefined
@@ -184,6 +253,11 @@ export function Deck({ editingId, onEdit }: Props) {
             const recall = recallByItem.get(item.id) ?? null
             return (
               <li key={item.id} className={item.id === editingId ? 'editing' : undefined}>
+                <input
+                  type="checkbox"
+                  checked={selected.has(item.id)}
+                  onChange={() => toggleSelect(item.id)}
+                />
                 <span className="deck-type muted">{TYPE_LABEL[item.type]}</span>
                 <span className="deck-front">{itemSummary(item)}</span>
                 {kc && <span className="kc-badge kc-badge-sm">{kc.name}</span>}
@@ -203,7 +277,18 @@ export function Deck({ editingId, onEdit }: Props) {
                 <button className="edit" onClick={() => onEdit(item.id)}>
                   편집
                 </button>
-                <button className="delete" onClick={() => deleteItem(item.id)}>
+                <button
+                  className="delete"
+                  onClick={() => {
+                    deleteItem(item.id)
+                    setSelected((prev) => {
+                      if (!prev.has(item.id)) return prev
+                      const next = new Set(prev)
+                      next.delete(item.id)
+                      return next
+                    })
+                  }}
+                >
                   삭제
                 </button>
               </li>

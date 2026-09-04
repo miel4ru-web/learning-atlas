@@ -126,6 +126,37 @@ export async function deleteItem(itemId: string): Promise<void> {
   await tx.done
 }
 
+// 덱 필터 결과에 대한 일괄 작업(v16). 한 건씩 addItem/deleteItem을 반복 호출하면
+// 그때마다 별도 트랜잭션 + AtlasProvider의 reload가 따라붙는다 — 여기선 트랜잭션
+// 하나로 묶는다. itemIds에 이미 지워진 id가 섞여 있어도(다른 화면에서 개별
+// 삭제된 뒤라든가) 조용히 건너뛴다 — 에러로 전체를 막지 않는다.
+export async function bulkSetKc(itemIds: readonly string[], kcId: string | null): Promise<void> {
+  const db = await getDB()
+  const tx = db.transaction('items', 'readwrite')
+  const store = tx.objectStore('items')
+  for (const id of itemIds) {
+    const item = await store.get(id)
+    if (item) await store.put({ ...item, kcId } as Item)
+  }
+  await tx.done
+}
+
+export async function bulkDeleteItems(itemIds: readonly string[]): Promise<void> {
+  const db = await getDB()
+  const tx = db.transaction(['items', 'interactions'], 'readwrite')
+  const items = tx.objectStore('items')
+  const idx = tx.objectStore('interactions').index('byItem')
+  for (const id of itemIds) {
+    await items.delete(id)
+    let cursor = await idx.openCursor(id)
+    while (cursor) {
+      await cursor.delete()
+      cursor = await cursor.continue()
+    }
+  }
+  await tx.done
+}
+
 export async function recordInteraction(
   itemId: string,
   grade: Grade,

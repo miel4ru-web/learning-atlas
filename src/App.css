@@ -436,6 +436,43 @@
 .deck-count { font-size: 0.8rem; margin-bottom: 8px; font-variant-numeric: tabular-nums; }
 .deck-study-scoped { margin-left: 8px; padding: 3px 10px; font-size: 0.78rem; }
 
+/* ---- 일괄 작업(v16) ---- */
+.deck-bulk-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  margin-bottom: 8px;
+  border-radius: 8px;
+  background: var(--bg, transparent);
+  border: 1px solid var(--border);
+  font-size: 0.82rem;
+}
+.deck-bulk-count { font-weight: 500; margin-right: 2px; }
+.deck-bulk-bar select {
+  padding: 5px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.8rem;
+}
+.deck-bulk-bar .reveal { padding: 5px 12px; font-size: 0.8rem; }
+.deck-bulk-delete {
+  padding: 5px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--again);
+  background: none;
+  color: var(--again);
+  cursor: pointer;
+  font-size: 0.8rem;
+}
+.deck-bulk-delete:hover { background: var(--again); color: #fff; }
+.deck-select-all { font-size: 0.8rem; color: var(--text-muted); }
+.deck-select-all label { display: flex; align-items: center; gap: 6px; cursor: pointer; }
+
 .deck ul {
   list-style: none;
   margin: 0;

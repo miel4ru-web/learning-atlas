@@ -184,6 +184,20 @@ export function AtlasProvider({ children }: { children: ReactNode }) {
     },
     [reload],
   )
+  const bulkSetKc = useCallback<AtlasData['bulkSetKc']>(
+    async (itemIds, kcId) => {
+      await db.bulkSetKc(itemIds, kcId)
+      await reload()
+    },
+    [reload],
+  )
+  const bulkDeleteItems = useCallback<AtlasData['bulkDeleteItems']>(
+    async (itemIds) => {
+      await db.bulkDeleteItems(itemIds)
+      await reload()
+    },
+    [reload],
+  )
   const recordInteraction = useCallback<AtlasData['recordInteraction']>(
     async (itemId, grade, confidence, errorTag) => {
       await db.recordInteraction(itemId, grade, confidence, errorTag)
@@ -246,6 +260,8 @@ export function AtlasProvider({ children }: { children: ReactNode }) {
       updateKC,
       deleteKC,
       deleteItem,
+      bulkSetKc,
+      bulkDeleteItems,
       recordInteraction,
       applyRefit,
       resetScheduler,
@@ -280,6 +296,8 @@ export function AtlasProvider({ children }: { children: ReactNode }) {
       updateKC,
       deleteKC,
       deleteItem,
+      bulkSetKc,
+      bulkDeleteItems,
       recordInteraction,
       applyRefit,
       resetScheduler,

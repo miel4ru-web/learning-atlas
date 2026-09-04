@@ -62,6 +62,8 @@ export interface AtlasData {
   updateKC: (kc: KnowledgeComponent) => Promise<void>
   deleteKC: (kcId: string) => Promise<void>
   deleteItem: (itemId: string) => Promise<void>
+  bulkSetKc: (itemIds: readonly string[], kcId: string | null) => Promise<void>
+  bulkDeleteItems: (itemIds: readonly string[]) => Promise<void>
   recordInteraction: (
     itemId: string,
     grade: Grade,

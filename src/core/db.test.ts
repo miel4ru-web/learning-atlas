@@ -43,6 +43,48 @@ describe('items', () => {
   })
 })
 
+describe('일괄 작업(v16)', () => {
+  it('bulkSetKc: 지정한 카드들의 kcId를 한 번에 바꾼다', async () => {
+    const a = await db.addItem({ type: 'flashcard', front: 'a', back: 'a', kcId: null })
+    const b = await db.addItem({ type: 'flashcard', front: 'b', back: 'b', kcId: null })
+    const untouched = await db.addItem({ type: 'flashcard', front: 'c', back: 'c', kcId: 'old' })
+
+    await db.bulkSetKc([a.id, b.id], 'k1')
+
+    const all = await db.getAllItems()
+    expect(all.find((i) => i.id === a.id)!.kcId).toBe('k1')
+    expect(all.find((i) => i.id === b.id)!.kcId).toBe('k1')
+    expect(all.find((i) => i.id === untouched.id)!.kcId).toBe('old')
+  })
+
+  it('bulkSetKc: null을 넘기면 분류 해제', async () => {
+    const a = await db.addItem({ type: 'flashcard', front: 'a', back: 'a', kcId: 'k1' })
+    await db.bulkSetKc([a.id], null)
+    expect((await db.getAllItems())[0].kcId).toBeNull()
+  })
+
+  it('bulkSetKc: 이미 지워진 id가 섞여 있어도 나머지는 정상 처리', async () => {
+    const a = await db.addItem({ type: 'flashcard', front: 'a', back: 'a', kcId: null })
+    await db.bulkSetKc(['ghost-id', a.id], 'k1')
+    expect((await db.getAllItems())[0].kcId).toBe('k1')
+  })
+
+  it('bulkDeleteItems: 카드와 그 상호작용을 함께 지운다, 나머지는 유지', async () => {
+    const a = await db.addItem({ type: 'flashcard', front: 'a', back: 'a', kcId: null })
+    await db.recordInteraction(a.id, 'good', null, null)
+    const b = await db.addItem({ type: 'flashcard', front: 'b', back: 'b', kcId: null })
+    await db.recordInteraction(b.id, 'good', null, null)
+    const keep = await db.addItem({ type: 'flashcard', front: 'c', back: 'c', kcId: null })
+
+    await db.bulkDeleteItems([a.id, b.id])
+
+    const remaining = await db.getAllItems()
+    expect(remaining.map((i) => i.id)).toEqual([keep.id])
+    expect(await db.getInteractionsForItem(a.id)).toHaveLength(0)
+    expect(await db.getInteractionsForItem(b.id)).toHaveLength(0)
+  })
+})
+
 describe('KC 목표 파지율', () => {
   it('addKC에 넘긴 파지율이 저장되고, 안 넘기면 필드가 없다', async () => {
     await db.addKC('exam', [], 0.95)
