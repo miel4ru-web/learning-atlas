@@ -9,6 +9,7 @@ export const TYPE_LABEL: Record<ItemType, string> = {
   mcq: '4지선다',
   code: '코드',
   short: '단답형',
+  free_text: '자기 설명',
 }
 
 export function itemSummary(item: Item): string {
@@ -22,6 +23,8 @@ export function itemSummary(item: Item): string {
     case 'code':
       return item.prompt
     case 'short':
+      return item.prompt
+    case 'free_text':
       return item.prompt
   }
 }

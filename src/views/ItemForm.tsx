@@ -48,6 +48,16 @@ export function ItemForm({ kcs, initial, onDone }: Props) {
   const [shortAnswersText, setShortAnswersText] = useState(
     initial?.type === 'short' ? initial.acceptedAnswers.join(', ') : '',
   )
+  const [explainPrompt, setExplainPrompt] = useState(
+    initial?.type === 'free_text' ? initial.prompt : '',
+  )
+  const [explainModelAnswer, setExplainModelAnswer] = useState(
+    initial?.type === 'free_text' ? initial.modelAnswer : '',
+  )
+  // 핵심 요소는 한 줄에 하나 — 쉼표로 나누면 문장 안의 쉼표와 부딪힌다.
+  const [explainKeyPointsText, setExplainKeyPointsText] = useState(
+    initial?.type === 'free_text' ? (initial.keyPoints ?? []).join('\n') : '',
+  )
   const [kcId, setKcId] = useState(initial?.kcId ?? '')
 
   function buildPayload(): NewItem | null {
@@ -82,12 +92,27 @@ export function ItemForm({ kcs, initial, onDone }: Props) {
       setCodeTestsError(null)
       return { type: 'code', prompt: codePrompt.trim(), starterCode: codeStarter, tests, kcId: selectedKc }
     }
-    const acceptedAnswers = shortAnswersText
-      .split(',')
-      .map((a) => a.trim())
-      .filter((a) => a.length > 0)
-    if (!shortPrompt.trim() || acceptedAnswers.length === 0) return null
-    return { type: 'short', prompt: shortPrompt.trim(), acceptedAnswers, kcId: selectedKc }
+    if (type === 'short') {
+      const acceptedAnswers = shortAnswersText
+        .split(',')
+        .map((a) => a.trim())
+        .filter((a) => a.length > 0)
+      if (!shortPrompt.trim() || acceptedAnswers.length === 0) return null
+      return { type: 'short', prompt: shortPrompt.trim(), acceptedAnswers, kcId: selectedKc }
+    }
+    if (!explainPrompt.trim() || !explainModelAnswer.trim()) return null
+    const keyPoints = explainKeyPointsText
+      .split('\n')
+      .map((p) => p.trim())
+      .filter((p) => p.length > 0)
+    return {
+      type: 'free_text',
+      prompt: explainPrompt.trim(),
+      modelAnswer: explainModelAnswer.trim(),
+      // 없으면 필드 자체를 안 넣는다 — optional 필드의 형태를 저장·백업 양쪽에서 통일.
+      ...(keyPoints.length > 0 ? { keyPoints } : {}),
+      kcId: selectedKc,
+    }
   }
 
   async function handleSubmit(e: FormEvent) {
@@ -178,6 +203,25 @@ export function ItemForm({ kcs, initial, onDone }: Props) {
               value={shortAnswersText}
               onChange={(e) => setShortAnswersText(e.target.value)}
               placeholder="정답 (동의어는 쉼표로 구분, 예: 물, H2O)"
+            />
+          </>
+        )}
+        {type === 'free_text' && (
+          <>
+            <input
+              value={explainPrompt}
+              onChange={(e) => setExplainPrompt(e.target.value)}
+              placeholder="질문 (예: 왜 간격을 두고 복습해야 하나?)"
+            />
+            <textarea
+              value={explainModelAnswer}
+              onChange={(e) => setExplainModelAnswer(e.target.value)}
+              placeholder="모범 답안 — 내 설명과 대조할 기준"
+            />
+            <textarea
+              value={explainKeyPointsText}
+              onChange={(e) => setExplainKeyPointsText(e.target.value)}
+              placeholder="핵심 요소 (선택) — 한 줄에 하나씩"
             />
           </>
         )}

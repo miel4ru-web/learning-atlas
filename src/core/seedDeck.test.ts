@@ -36,9 +36,15 @@ describe('예시 덱(v22)', () => {
     }
   })
 
-  it('다섯 활동 타입을 모두 한 번 이상 보여준다', () => {
+  it('모든 활동 타입을 한 번 이상 보여준다', () => {
     const types = new Set(deck.items.map((i) => i.type))
-    expect([...types].sort()).toEqual(['cloze', 'code', 'flashcard', 'mcq', 'short'])
+    expect([...types].sort()).toEqual(['cloze', 'code', 'flashcard', 'free_text', 'mcq', 'short'])
+  })
+
+  it('자기 설명 카드에는 모범 답안이 있다 — 대조할 기준이 없으면 자기 채점이 불가능하다', () => {
+    for (const item of deck.items) {
+      if (item.type === 'free_text') expect(item.modelAnswer.trim().length).toBeGreaterThan(0)
+    }
   })
 
   it('빈칸 카드에는 실제 빈칸이 있다', () => {

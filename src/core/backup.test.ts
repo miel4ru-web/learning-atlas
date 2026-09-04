@@ -72,6 +72,17 @@ describe('parseBackup 거부 케이스', () => {
     f.data.items[2].acceptedAnswers = []
     expect(parseBackup(JSON.stringify(f))).toMatchObject({ ok: false })
   })
+  it('자기 설명인데 모범 답안이 없으면', () => {
+    const f = ok()
+    f.data.items.push({
+      id: 'ft-1',
+      type: 'free_text',
+      kcId: null,
+      createdAt: '2026-01-01T00:00:00.000Z',
+      prompt: '왜?',
+    })
+    expect(parseBackup(JSON.stringify(f))).toMatchObject({ ok: false })
+  })
   it('v19 부가 신호가 붙은 로그도 왕복되고, 형태가 깨졌으면 거부', () => {
     const f = ok()
     Object.assign(f.data.interactions[0], {

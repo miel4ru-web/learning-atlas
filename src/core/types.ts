@@ -81,7 +81,23 @@ export interface CodeItem extends ItemBase {
   tests: CodeTest[]
 }
 
-export type Item = FlashcardItem | ClozeItem | McqItem | CodeItem | ShortAnswerItem
+/**
+ * 자기 설명 / 정교화 질문(v24). Dunlosky 표의 중간 등급 두 기법 — "왜 그런가"를
+ * 스스로 답하게 하고(정교화 질문), 풀이를 자기 말로 설명하게 한다(자기 설명).
+ *
+ * 채점은 기계가 못 한다. 문서 3.5는 서술형 루브릭 채점을 LLM 보류 트랙에 두면서
+ * "지금 대신" 쓸 방법으로 **모범 답안 대조 자기 채점**을 지정했다 — 그게 이 타입이다.
+ * keyPoints는 그 자기 채점이 후해지지 않게 "무엇을 짚었어야 하는지"를 같이 보여주는
+ * 체크리스트다(3.5가 경고한 자기 채점의 주된 실패 모드가 후한 채점이다).
+ */
+export interface FreeTextItem extends ItemBase {
+  type: 'free_text'
+  prompt: string
+  modelAnswer: string
+  keyPoints?: string[]
+}
+
+export type Item = FlashcardItem | ClozeItem | McqItem | CodeItem | ShortAnswerItem | FreeTextItem
 export type ItemType = Item['type']
 
 // 일반 Omit<Item,K>는 유니온을 먼저 keyof로 뭉개버려서 flashcard의 front,

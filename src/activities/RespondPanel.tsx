@@ -12,6 +12,7 @@ import type {
   ClozeItem,
   ErrorTag,
   FlashcardItem,
+  FreeTextItem,
   Grade,
   InteractionSignals,
   Item,
@@ -68,19 +69,40 @@ export function RespondPanel({ item, onGraded }: Props) {
       return <CodeRespond item={item} onGraded={graded} />
     case 'short':
       return <ShortAnswerRespond item={item} onGraded={graded} />
+    case 'free_text':
+      return <FreeTextRespond item={item} onGraded={graded} />
   }
+}
+
+// 자기 채점 4단계 — 플래시카드와 자기 설명이 함께 쓴다. 채점 기준이 사람 판단인
+// 활동은 이 UI를, 기계 판정이 가능한 활동은 ObjectiveOutcome을 쓴다.
+function SelfGrade({ onGraded }: { onGraded: (grade: Grade, errorTag: ErrorTag | null) => void }) {
+  const [awaitingTag, setAwaitingTag] = useState(false)
+
+  if (awaitingTag) return <ErrorTagPicker onPick={(tag) => onGraded('again', tag)} />
+
+  return (
+    <div className="grades">
+      <button className="grade grade-again" onClick={() => setAwaitingTag(true)}>
+        다시
+      </button>
+      <button className="grade grade-hard" onClick={() => onGraded('hard', null)}>
+        어려움
+      </button>
+      <button className="grade grade-good" onClick={() => onGraded('good', null)}>
+        좋음
+      </button>
+      <button className="grade grade-easy" onClick={() => onGraded('easy', null)}>
+        쉬움
+      </button>
+    </div>
+  )
 }
 
 // ---- flashcard: 기존 v0/v1 그대로. 자기 채점이라 결과 배너 없이 즉시 확정된다.
 // 입력 필드가 없으니 남길 응답 원문도 없다(신호는 응답 시간뿐). ----
 function FlashcardRespond({ item, onGraded }: { item: FlashcardItem; onGraded: Graded }) {
   const [revealed, setRevealed] = useState(false)
-  const [awaitingTag, setAwaitingTag] = useState(false)
-
-  function grade(g: Grade) {
-    if (g === 'again') setAwaitingTag(true)
-    else onGraded(g, null)
-  }
 
   return (
     <>
@@ -89,27 +111,70 @@ function FlashcardRespond({ item, onGraded }: { item: FlashcardItem; onGraded: G
         <button className="reveal" onClick={() => setRevealed(true)}>
           답 보기
         </button>
-      ) : awaitingTag ? (
-        <ErrorTagPicker onPick={(tag) => onGraded('again', tag)} />
       ) : (
         <>
+          {/* 오답 태그를 고르는 동안에도 답은 계속 보인다 — 왜 틀렸는지 고르려면 정답을 봐야 한다. */}
           <p className="card-back">{item.back}</p>
-          <div className="grades">
-            <button className="grade grade-again" onClick={() => grade('again')}>
-              다시
-            </button>
-            <button className="grade grade-hard" onClick={() => grade('hard')}>
-              어려움
-            </button>
-            <button className="grade grade-good" onClick={() => grade('good')}>
-              좋음
-            </button>
-            <button className="grade grade-easy" onClick={() => grade('easy')}>
-              쉬움
-            </button>
-          </div>
+          <SelfGrade onGraded={onGraded} />
         </>
       )}
+    </>
+  )
+}
+
+// 자기 설명(v24): 먼저 자기 말로 쓰게 하고(생성 효과), 그다음에야 모범 답안을 보여
+// 대조시킨다. 순서가 핵심이다 — 먼저 보여주면 "읽고 고개 끄덕이기"가 되어 1부의
+// 저효용 구간(재읽기)으로 떨어진다. 채점은 사람이 하되, keyPoints로 무엇을 짚었어야
+// 하는지 같이 보여줘 자기 채점이 후해지는 걸 조금이나마 막는다(3.5).
+function FreeTextRespond({ item, onGraded }: { item: FreeTextItem; onGraded: Graded }) {
+  const [answer, setAnswer] = useState('')
+  const [submitted, setSubmitted] = useState(false)
+
+  if (!submitted) {
+    return (
+      <>
+        <p className="card-front">{item.prompt}</p>
+        <form
+          className="free-text-form"
+          onSubmit={(e) => {
+            e.preventDefault()
+            setSubmitted(true)
+          }}
+        >
+          <textarea
+            value={answer}
+            onChange={(e) => setAnswer(e.target.value)}
+            placeholder="자기 말로 설명해 보세요"
+            autoFocus
+          />
+          <button type="submit">설명 마치고 답안 보기</button>
+        </form>
+      </>
+    )
+  }
+
+  return (
+    <>
+      <p className="card-front">{item.prompt}</p>
+      <div className="free-text-compare">
+        <div className="free-text-mine">
+          <h3>내 설명</h3>
+          <p>{answer.trim() || '(비어 있음)'}</p>
+        </div>
+        <div className="free-text-model">
+          <h3>모범 답안</h3>
+          <p>{item.modelAnswer}</p>
+          {item.keyPoints && item.keyPoints.length > 0 && (
+            <ul className="free-text-points">
+              {item.keyPoints.map((point, i) => (
+                <li key={i}>{point}</li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </div>
+      <p className="muted free-text-hint">빠뜨린 부분을 기준으로 스스로 채점하세요.</p>
+      <SelfGrade onGraded={(grade, tag) => onGraded(grade, tag, { response: answer })} />
     </>
   )
 }

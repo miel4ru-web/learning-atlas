@@ -5,6 +5,7 @@ import type {
   ClozeItem,
   CodeItem,
   FlashcardItem,
+  FreeTextItem,
   Grade,
   Interaction,
   KnowledgeComponent,
@@ -83,6 +84,18 @@ export function shortAnswer(o: Partial<ShortAnswerItem> = {}): ShortAnswerItem {
     createdAt: iso(0),
     prompt: 'prompt',
     acceptedAnswers: ['answer'],
+    ...o,
+  }
+}
+
+export function freeText(o: Partial<FreeTextItem> = {}): FreeTextItem {
+  return {
+    id: nextId('item'),
+    type: 'free_text',
+    kcId: null,
+    createdAt: iso(0),
+    prompt: '왜 그런가?',
+    modelAnswer: '모범 답안',
     ...o,
   }
 }

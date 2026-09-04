@@ -116,6 +116,13 @@ function isItem(v: unknown): v is Item {
         v.acceptedAnswers.length > 0 &&
         v.acceptedAnswers.every((a) => typeof a === 'string')
       )
+    case 'free_text':
+      return (
+        typeof v.prompt === 'string' &&
+        typeof v.modelAnswer === 'string' &&
+        (v.keyPoints === undefined ||
+          (Array.isArray(v.keyPoints) && v.keyPoints.every((p) => typeof p === 'string')))
+      )
     default:
       return false
   }

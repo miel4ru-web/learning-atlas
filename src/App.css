@@ -571,6 +571,54 @@
 }
 .mcq-options button:hover { border-color: var(--accent); color: var(--accent); }
 
+/* ---- 자기 설명(v24) ---- */
+.free-text-form { display: grid; gap: 10px; width: 100%; }
+.free-text-form textarea {
+  min-height: 110px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  resize: vertical;
+}
+.free-text-form button {
+  justify-self: center;
+  padding: 10px 20px;
+  border-radius: 8px;
+  border: none;
+  background: var(--accent);
+  color: var(--accent-contrast);
+  cursor: pointer;
+}
+.free-text-compare { display: grid; gap: 14px; width: 100%; text-align: left; }
+@media (min-width: 700px) {
+  .free-text-compare { grid-template-columns: 1fr 1fr; }
+}
+.free-text-compare h3 {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin: 0 0 6px;
+  letter-spacing: 0.02em;
+}
+.free-text-compare p { margin: 0; font-size: 0.92rem; line-height: 1.6; white-space: pre-wrap; }
+.free-text-mine, .free-text-model {
+  padding: 12px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+}
+.free-text-model { border-color: var(--accent); }
+.free-text-points {
+  margin: 10px 0 0;
+  padding-left: 18px;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+.free-text-hint { font-size: 0.82rem; }
+
 .cloze-form,
 .short-answer-form {
   display: grid;
