@@ -1,32 +1,55 @@
-# React + TypeScript + Vite
+# Learning Atlas
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+브라우저에서 도는 로컬 우선 간격 반복 학습 도구. 데이터는 전부 이 브라우저의
+IndexedDB에만 저장된다(서버 없음). React 19 + TypeScript + Vite.
 
-Currently, two official plugins are available:
+## 설계 원칙 — 이벤트 소싱
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+영속화하는 건 세 가지뿐이다.
 
-## React Compiler
+| 스토어 | 내용 |
+| --- | --- |
+| `items` | 카드 정의 (플래시카드 / 빈칸 / 4지선다 / 코드) |
+| `kcs` | 지식 요소(Knowledge Component)와 선수지식 DAG |
+| `interactions` | 채점 로그 — **append-only, 수정·삭제 안 함** |
+| `settings` | 개인 로그로 재적합한 FSRS 파라미터 (단일 레코드, 선택) |
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+FSRS 카드 상태, Elo 숙달도, 캘리브레이션, 예측 회상률 등 **파생 상태는 저장하지
+않는다**. 매번 `interactions` 로그를 재생해 계산한다. 덕분에 스케줄러를 바꿔
+끼우거나(SM-2 → FSRS, 파라미터 재적합) 백업을 복원해도 과거 로그 전체가 새
+기준으로 재계산된다.
 
-## Expanding the Oxlint configuration
+## 기능 (v0 → v7)
 
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
+- **v0** FSRS-6 스케줄러(`ts-fsrs`), 이벤트 소싱 플래시카드 큐
+- **v1** KC 선수지식 DAG, Elo 숙달도 추정(θ·b), 세션 오케스트레이터, 응답 전 자신감 입력
+- **v2** 빈칸/4지선다/코드 활동 타입, 오답 원인 태깅, leech 격리·재출제, 메타인지 캘리브레이션
+- **v3** 분석 대시보드, 오프라인 시뮬레이션(log loss·RMSE), 개인 로그로 FSRS 21개 파라미터 재적합(Hooke–Jeeves)
+- **v4** "바람직한 어려움" 밴드(예측 회상률 0.70–0.85) 기반 문항 선택 — v1부터 계산만 되던 Elo 문항 난이도를 여기서 활용
+- **v5** 전체 데이터 JSON 내보내기 / 가져오기(병합·완전교체), 파일 검증
+- **v6** 탭 셸 구조 — 전역 상태(`AtlasProvider`)와 화면(`views/`) 분리, 화면 등록소(`views/registry.ts`)로 확장
+- **v7** 반응형 데스크톱 레이아웃 — ≥900px 사이드바, 그 아래는 상단 탭 바
 
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+## 구조
+
+```
+src/
+  core/        도메인 모델, IndexedDB 접근, 백업, 캘리브레이션, 전역 상태(AtlasProvider)
+  scheduler/   FSRS 래퍼, Elo, 세션 편성, 난이도 밴드 선택, 재적합 옵티마이저, 시뮬레이션
+  activities/  활동 타입별 응답 UI, 오답 태그 선택
+  analytics/   대시보드, 통계 집계
+  shell/       탭 바 / 사이드바 / 해시 라우팅
+  views/       학습 · 진단 · 카드 · 데이터 (+ registry)
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+새 화면(단계)을 추가하려면 `views/`에 컴포넌트 파일 하나를 만들고
+`views/registry.ts`의 `VIEWS` 배열에 한 줄 등록하면 된다.
+
+## 개발
+
+```bash
+npm install
+npm run dev      # Vite 개발 서버
+npm run build    # tsc -b && vite build
+npm run lint     # oxlint
+```
