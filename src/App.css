@@ -209,7 +209,8 @@
 }
 
 .type-tabs { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
-.type-tabs button {
+.type-tabs button,
+.chip {
   padding: 6px 12px;
   border-radius: 999px;
   border: 1px solid var(--border);
@@ -218,7 +219,8 @@
   cursor: pointer;
   font-size: 0.82rem;
 }
-.type-tabs button.active { border-color: var(--accent); color: var(--accent); background: var(--accent-bg, transparent); }
+.type-tabs button.active,
+.chip.active { border-color: var(--accent); color: var(--accent); background: var(--accent-bg, transparent); }
 
 .item-form {
   display: grid;
@@ -404,20 +406,6 @@
   font-size: 0.82rem;
 }
 .deck-filter-chips { display: flex; flex-wrap: wrap; gap: 4px; }
-.chip {
-  padding: 5px 10px;
-  border-radius: 999px;
-  border: 1px solid var(--border);
-  background: var(--surface);
-  color: var(--text-muted);
-  cursor: pointer;
-  font-size: 0.76rem;
-}
-.chip.active {
-  border-color: var(--accent);
-  color: var(--accent);
-  background: var(--accent-bg, transparent);
-}
 .deck-filter-reset { padding: 6px 12px; font-size: 0.82rem; }
 .deck-count { font-size: 0.8rem; margin-bottom: 8px; font-variant-numeric: tabular-nums; }
 

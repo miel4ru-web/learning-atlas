@@ -120,4 +120,20 @@ describe('matchesDeckFilter', () => {
     expect(matchesDeckFilter(easy, { ...emptyFilter(), band: 'too-easy' }, c)).toBe(true)
     expect(matchesDeckFilter(easy, { ...emptyFilter(), band: 'too-hard' }, c)).toBe(false)
   })
+
+  it("'unknown' 밴드는 KC 미분류 카드만 — 신규·미채점 카드는 KC가 있으면 예측 밴드로 분류", () => {
+    const unreviewedWithKc = flashcard({ kcId: 'k1' })
+    const noKc = flashcard({ kcId: null })
+    const c = ctx({
+      // cardStates에 항목이 없다 = 둘 다 아직 채점된 적 없는 신규 카드.
+      eloState: {
+        kcMastery: new Map([['k1', 0]]),
+        itemDifficulty: new Map(), // 미채점이라 문항 난이도 b는 기본값(0) → θ=b → 회상 ≈ 0.5 → too-hard
+      },
+    })
+    expect(matchesDeckFilter(unreviewedWithKc, { ...emptyFilter(), band: 'too-hard' }, c)).toBe(true)
+    expect(matchesDeckFilter(unreviewedWithKc, { ...emptyFilter(), band: 'unknown' }, c)).toBe(false)
+    expect(matchesDeckFilter(noKc, { ...emptyFilter(), band: 'unknown' }, c)).toBe(true)
+    expect(matchesDeckFilter(noKc, { ...emptyFilter(), band: 'too-hard' }, c)).toBe(false)
+  })
 })
