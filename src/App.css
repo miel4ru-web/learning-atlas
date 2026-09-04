@@ -83,7 +83,8 @@
   grid-template-columns: 1fr 1fr auto;
   gap: 8px;
 }
-.add-item input {
+.add-item input,
+.add-item select {
   padding: 10px 12px;
   border-radius: 8px;
   border: 1px solid var(--border);
@@ -93,6 +94,118 @@
 }
 .add-item button {
   padding: 10px 16px;
+  border-radius: 8px;
+  border: none;
+  background: var(--accent);
+  color: var(--accent-contrast);
+  cursor: pointer;
+}
+
+/* ---- 세션 시작 패널 ---- */
+.session-start {
+  border: 1px dashed var(--border);
+  border-radius: 12px;
+  padding: 40px 24px;
+  text-align: center;
+  display: grid;
+  gap: 16px;
+  justify-items: center;
+}
+.session-start label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.session-start input {
+  width: 64px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  text-align: center;
+}
+.start {
+  padding: 12px 24px;
+  border-radius: 8px;
+  border: none;
+  background: var(--accent);
+  color: var(--accent-contrast);
+  cursor: pointer;
+  font-size: 1rem;
+}
+.start:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* ---- 자신감 입력 ---- */
+.confidence { display: grid; gap: 12px; justify-items: center; }
+.confidence-buttons { display: flex; gap: 8px; }
+.confidence-buttons button {
+  padding: 10px 16px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+}
+.confidence-buttons button:hover { border-color: var(--accent); color: var(--accent); }
+
+.kc-badge {
+  display: inline-block;
+  font-size: 0.75rem;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--accent-bg, transparent);
+  border: 1px solid var(--accent);
+  color: var(--accent);
+}
+.kc-badge-sm { font-size: 0.7rem; padding: 1px 7px; }
+
+.session-progress { font-size: 0.8rem; }
+
+/* ---- 지식 요소 ---- */
+.kcs h2 { font-size: 0.95rem; font-weight: 600; margin-bottom: 12px; }
+.kc-list {
+  list-style: none;
+  margin: 0 0 16px;
+  padding: 0;
+  border-top: 1px solid var(--border);
+}
+.kc-list li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.9rem;
+}
+.kc-name { font-weight: 500; }
+.kc-mastery { font-variant-numeric: tabular-nums; }
+.kc-prereq { font-size: 0.8rem; }
+
+.kc-form {
+  display: grid;
+  gap: 10px;
+}
+.kc-form input {
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+}
+.kc-prereq-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  font-size: 0.85rem;
+}
+.kc-prereq-picker label { display: flex; align-items: center; gap: 4px; }
+.kc-form button {
+  justify-self: start;
+  padding: 8px 16px;
   border-radius: 8px;
   border: none;
   background: var(--accent);

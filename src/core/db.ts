@@ -1,14 +1,17 @@
-// IndexedDB 접근 계층. 두 개의 append-only에 가까운 스토어만 둔다:
-// items(카드 정의)와 interactions(채점 로그). 둘 다 UPDATE는 없고, items는
-// 편집을 허용하지만 interactions는 절대 수정하지 않는다(core/types.ts 주석 참고).
+// IndexedDB 접근 계층. 세 스토어: items·kcs(카드/지식요소 정의, 편집 가능)와
+// interactions(채점 로그, append-only — core/types.ts 주석 참고).
 
 import { openDB, type DBSchema, type IDBPDatabase } from 'idb'
-import type { Item, Interaction, Grade } from './types'
+import type { Item, Interaction, Grade, Confidence, KnowledgeComponent } from './types'
 
 interface AtlasDB extends DBSchema {
   items: {
     key: string
     value: Item
+  }
+  kcs: {
+    key: string
+    value: KnowledgeComponent
   }
   interactions: {
     key: string
@@ -21,11 +24,18 @@ let dbPromise: Promise<IDBPDatabase<AtlasDB>> | null = null
 
 function getDB() {
   if (!dbPromise) {
-    dbPromise = openDB<AtlasDB>('learning-atlas', 1, {
-      upgrade(db) {
-        db.createObjectStore('items', { keyPath: 'id' })
-        const interactions = db.createObjectStore('interactions', { keyPath: 'id' })
-        interactions.createIndex('byItem', 'itemId')
+    dbPromise = openDB<AtlasDB>('learning-atlas', 2, {
+      upgrade(db, oldVersion) {
+        if (oldVersion < 1) {
+          db.createObjectStore('items', { keyPath: 'id' })
+          const interactions = db.createObjectStore('interactions', { keyPath: 'id' })
+          interactions.createIndex('byItem', 'itemId')
+        }
+        if (oldVersion < 2) {
+          db.createObjectStore('kcs', { keyPath: 'id' })
+          // 기존 items/interactions 레코드는 kcId/confidence가 없는 채로 남는다.
+          // 읽는 쪽에서 `?? null`로 처리한다 (v0 데이터와의 호환).
+        }
       },
     })
   }
@@ -36,8 +46,8 @@ function newId(): string {
   return crypto.randomUUID()
 }
 
-export async function addItem(front: string, back: string): Promise<Item> {
-  const item: Item = { id: newId(), front, back, createdAt: new Date().toISOString() }
+export async function addItem(front: string, back: string, kcId: string | null): Promise<Item> {
+  const item: Item = { id: newId(), front, back, kcId, createdAt: new Date().toISOString() }
   const db = await getDB()
   await db.add('items', item)
   return item
@@ -61,12 +71,17 @@ export async function deleteItem(itemId: string): Promise<void> {
   await tx.done
 }
 
-export async function recordInteraction(itemId: string, grade: Grade): Promise<Interaction> {
+export async function recordInteraction(
+  itemId: string,
+  grade: Grade,
+  confidence: Confidence | null,
+): Promise<Interaction> {
   const interaction: Interaction = {
     id: newId(),
     itemId,
     ts: new Date().toISOString(),
     grade,
+    confidence,
   }
   const db = await getDB()
   await db.add('interactions', interaction)
@@ -81,6 +96,18 @@ export async function getAllInteractions(): Promise<Interaction[]> {
 export async function getInteractionsForItem(itemId: string): Promise<Interaction[]> {
   const db = await getDB()
   return db.getAllFromIndex('interactions', 'byItem', itemId)
+}
+
+export async function addKC(name: string, prereqIds: string[]): Promise<KnowledgeComponent> {
+  const kc: KnowledgeComponent = { id: newId(), name, prereqIds, createdAt: new Date().toISOString() }
+  const db = await getDB()
+  await db.add('kcs', kc)
+  return kc
+}
+
+export async function getAllKCs(): Promise<KnowledgeComponent[]> {
+  const db = await getDB()
+  return db.getAll('kcs')
 }
 
 // 4부 검증 체크리스트: 로그를 지우고 재생해도 같은 스케줄이 나와야 한다.
