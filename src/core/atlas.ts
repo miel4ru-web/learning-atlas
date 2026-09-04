@@ -51,6 +51,7 @@ export interface AtlasData {
   reload: () => Promise<void>
   addItem: (input: NewItem) => Promise<void>
   addKC: (name: string, prereqIds: string[]) => Promise<void>
+  deleteKC: (kcId: string) => Promise<void>
   deleteItem: (itemId: string) => Promise<void>
   recordInteraction: (
     itemId: string,

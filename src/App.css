@@ -282,6 +282,7 @@
 .kc-name { font-weight: 500; }
 .kc-mastery { font-variant-numeric: tabular-nums; }
 .kc-prereq { font-size: 0.8rem; }
+.kc-delete { margin-left: auto; }
 
 .kc-form {
   display: grid;

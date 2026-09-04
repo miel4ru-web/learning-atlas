@@ -123,6 +123,13 @@ export function AtlasProvider({ children }: { children: ReactNode }) {
     },
     [reload],
   )
+  const deleteKC = useCallback<AtlasData['deleteKC']>(
+    async (kcId) => {
+      await db.deleteKC(kcId)
+      await reload()
+    },
+    [reload],
+  )
   const deleteItem = useCallback<AtlasData['deleteItem']>(
     async (itemId) => {
       await db.deleteItem(itemId)
@@ -185,6 +192,7 @@ export function AtlasProvider({ children }: { children: ReactNode }) {
       reload,
       addItem,
       addKC,
+      deleteKC,
       deleteItem,
       recordInteraction,
       applyRefit,
@@ -213,6 +221,7 @@ export function AtlasProvider({ children }: { children: ReactNode }) {
       reload,
       addItem,
       addKC,
+      deleteKC,
       deleteItem,
       recordInteraction,
       applyRefit,

@@ -149,6 +149,38 @@ export async function addKC(name: string, prereqIds: string[]): Promise<Knowledg
   return kc
 }
 
+// KC를 지우면 그 KC를 가리키던 카드는 지우지 않고 kcId만 null로 되돌린다(채점
+// 로그는 그대로 — 카드가 사라지는 게 아니라 "분류 없음"이 될 뿐이다). 다른 KC의
+// 선수지식 목록에서도 빠진다. Elo θ는 다음 재생부터 이 KC가 없으니 자연히 사라진다.
+export async function deleteKC(kcId: string): Promise<void> {
+  const db = await getDB()
+  const tx = db.transaction(['kcs', 'items'], 'readwrite')
+  const kcs = tx.objectStore('kcs')
+  const items = tx.objectStore('items')
+
+  await kcs.delete(kcId)
+
+  let kcCursor = await kcs.openCursor()
+  while (kcCursor) {
+    const kc = kcCursor.value
+    if (kc.prereqIds.includes(kcId)) {
+      await kcCursor.update({ ...kc, prereqIds: kc.prereqIds.filter((p) => p !== kcId) })
+    }
+    kcCursor = await kcCursor.continue()
+  }
+
+  let itemCursor = await items.openCursor()
+  while (itemCursor) {
+    const item = itemCursor.value
+    if (item.kcId === kcId) {
+      await itemCursor.update({ ...item, kcId: null } as Item)
+    }
+    itemCursor = await itemCursor.continue()
+  }
+
+  await tx.done
+}
+
 export async function getAllKCs(): Promise<KnowledgeComponent[]> {
   const db = await getDB()
   return db.getAll('kcs')

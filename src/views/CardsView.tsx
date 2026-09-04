@@ -128,11 +128,23 @@ export function CardsView() {
               const theta = eloState.kcMastery.get(kc.id) ?? 0
               const pct = Math.round(masteryProbability(theta) * 100)
               const prereqNames = kc.prereqIds.map((id) => kcById.get(id)?.name ?? '?').join(', ')
+              const usedBy = atlas.items.filter((it) => it.kcId === kc.id).length
               return (
                 <li key={kc.id}>
                   <span className="kc-name">{kc.name}</span>
                   <span className="kc-mastery muted">숙달도 {pct}%</span>
                   {prereqNames && <span className="kc-prereq muted">선수: {prereqNames}</span>}
+                  <button
+                    className="delete kc-delete"
+                    onClick={() => atlas.deleteKC(kc.id)}
+                    title={
+                      usedBy > 0
+                        ? `카드 ${usedBy}장의 분류가 해제됩니다 (카드는 삭제되지 않음)`
+                        : undefined
+                    }
+                  >
+                    삭제
+                  </button>
                 </li>
               )
             })}
