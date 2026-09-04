@@ -6,6 +6,7 @@ import { useRef, useState, type ChangeEvent } from 'react'
 import { useAtlas } from '../core/atlas'
 import * as db from '../core/db'
 import { serializeBackup, parseBackup, backupFilename, type BackupSummary } from '../core/backup'
+import { seedDeck, SEED_DECK_SIZE } from '../core/seedDeck'
 
 export function DataView() {
   const atlas = useAtlas()
@@ -16,6 +17,7 @@ export function DataView() {
   const [mode, setMode] = useState<db.ImportMode>('merge')
   const [error, setError] = useState<string | null>(null)
   const [importing, setImporting] = useState(false)
+  const [seeding, setSeeding] = useState(false)
 
   async function handleExport() {
     const snapshot = await db.exportAll()
@@ -40,6 +42,12 @@ export function DataView() {
     }
     setError(null)
     setPreview({ snapshot: result.snapshot, summary: result.summary })
+  }
+
+  async function handleSeed() {
+    setSeeding(true)
+    await atlas.importBackup(seedDeck(), 'merge')
+    setSeeding(false)
   }
 
   async function handleConfirmImport() {
@@ -75,6 +83,16 @@ export function DataView() {
       </div>
 
       {error && <p className="error-text">{error}</p>}
+
+      <div className="seed-deck-block">
+        <p className="muted">
+          둘러볼 카드가 필요하면 예시 덱({SEED_DECK_SIZE}장)을 넣어 볼 수 있습니다. 같은 id를
+          덮어쓰므로 여러 번 넣어도 카드가 늘지 않습니다.
+        </p>
+        <button className="reveal" onClick={handleSeed} disabled={seeding}>
+          {seeding ? '넣는 중…' : '예시 덱 넣기'}
+        </button>
+      </div>
 
       {preview && (
         <div className="import-preview">

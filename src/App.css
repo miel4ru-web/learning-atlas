@@ -287,6 +287,17 @@
   font-size: 0.85rem;
   color: var(--text-muted);
 }
+.empty-start { display: grid; gap: 10px; justify-items: center; }
+.seed-note { font-size: 0.8rem; max-width: 34ch; line-height: 1.5; }
+.seed-deck-block {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+  display: grid;
+  gap: 10px;
+  justify-items: start;
+  font-size: 0.85rem;
+}
 .vacation-toggle { justify-content: center; }
 .start {
   padding: 12px 24px;

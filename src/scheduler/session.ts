@@ -73,8 +73,9 @@ function isReady(kc: KnowledgeComponent | undefined, mastery: Map<string, number
  *    — 복습은 게이팅하지 않는다: 이미 시작한 카드를 선수지식 미달을 이유로
  *    멈추면 그 자체로 파지가 끊긴다.
  * 4. 예산이 허용하는 한, 같은 KC가 maxConsecutiveSameKc회, 같은 활동 타입이
- *    maxConsecutiveSameType회를 넘겨 연속되지 않도록 건너뛰며 담는다
- *    (뒤로 미룰 뿐 버리지 않음 — 다음 세션에서 다시 후보가 된다).
+ *    maxConsecutiveSameType회를 넘겨 연속되지 않도록 건너뛰며 담는다. 단 제약에
+ *    걸려 밀린 카드는 버리지 않고, 예산이 남으면 마지막에 되살린다 — 섞을 상대가
+ *    없다고 세션이 두세 장으로 잘리는 게 더 나쁘기 때문(아래 fillFrom 주석).
  * 5. dailyReviewCap(3.1 백로그 정책)이 있으면 정렬된 복습 후보 중 상위 N개만
  *    남긴다 — 밀린 게 아무리 많아도 하루에 다 쏟지 않는다. vacationMode면
  *    신규 카드는 아예 후보에서 뺀다.
@@ -134,9 +135,9 @@ export function buildSession(
   let run = 0
   let lastType: Item['type'] | null = null
   let typeRun = 0
-  // 타입 제약 때문에 밀린 카드. KC 제약과 달리 이건 다음 세션으로 미루지 않고
-  // 아래 2차 패스에서 되살린다 — 이유는 그 주석 참고.
+  // 인터리빙 제약에 걸려 1차 패스에서 밀린 카드들. 버리지 않고 아래에서 되살린다.
   const deferredByType: Item[] = []
+  const deferredByKc: Item[] = []
 
   function place(item: Item) {
     plan.push(item)
@@ -153,9 +154,49 @@ export function buildSession(
     }
   }
 
+  /**
+   * 밀린 카드를 예산이 허용하는 만큼 채운다. 직전 카드와 key가 다른 후보 중에서
+   * "남은 개수가 가장 많은 key"의 가장 앞(=점수가 높은) 카드를 고른다 — 그냥 앞에서부터
+   * 집으면 수가 적은 key가 먼저 소진되고 많은 key가 꼬리에 몰려 결국 연속된다.
+   * 섞을 상대가 아예 없으면 순서대로 채운다(제약을 양보하는 지점).
+   * 예산이나 isEligible에 막혀 못 넣은 카드는 그대로 돌려준다 — 다음 단계가 이어받는다.
+   */
+  function fillFrom(
+    pending: Item[],
+    keyOf: (item: Item) => string | null,
+    lastKeyOf: () => string | null,
+    isEligible: (item: Item) => boolean = () => true,
+  ): Item[] {
+    const rest = [...pending]
+    while (budgetLeft >= cost && rest.length > 0) {
+      const eligible = rest.filter(isEligible)
+      if (eligible.length === 0) break
+      const lastKey = lastKeyOf()
+      const different = eligible.filter((item) => keyOf(item) !== lastKey)
+      const pool = different.length > 0 ? different : eligible
+
+      const remaining = new Map<string | null, number>()
+      for (const item of pool) remaining.set(keyOf(item), (remaining.get(keyOf(item)) ?? 0) + 1)
+      let bestKey = keyOf(pool[0])
+      for (const [key, n] of remaining) {
+        if (n > (remaining.get(bestKey) ?? 0)) bestKey = key
+      }
+
+      const chosen = pool.find((item) => keyOf(item) === bestKey)!
+      place(chosen)
+      rest.splice(rest.indexOf(chosen), 1)
+    }
+    return rest
+  }
+
+  const blockedByKc = (item: Item) => item.kcId !== null && item.kcId === lastKc && run >= maxRun
+
   for (const item of ranked) {
     if (budgetLeft < cost) continue // 지금은 예산 초과라도, 더 싼 후보가 뒤에 있을 수 있어 break 대신 continue
-    if (item.kcId !== null && item.kcId === lastKc && run >= maxRun) continue // 인터리빙 제약 — 건너뛰고 다음 후보로
+    if (blockedByKc(item)) {
+      deferredByKc.push(item)
+      continue
+    }
     if (item.type === lastType && typeRun >= maxTypeRun) {
       deferredByType.push(item)
       continue
@@ -163,38 +204,29 @@ export function buildSession(
     place(item)
   }
 
-  // 2차 패스: 타입 제약으로 밀린 카드를 예산이 남은 만큼 채운다.
-  // 왜 KC 제약과 다르게 되살리는가 — 활동 타입은 종류가 다섯뿐이고, 실제 덱은
-  // "플래시카드만" 같은 단일 타입인 경우가 흔하다. 그런 덱에서 타입 제약을 그대로
-  // 밀어붙이면 섞을 상대가 없어 세션이 예산과 무관하게 서너 장으로 잘린다.
-  // 인터리빙은 순서를 다듬는 장치이지 학습량을 깎는 장치가 아니므로(3.3 "정렬은
-  // 점수, 배치는 제약"), 섞을 수 있을 때만 적용하고 아니면 양보한다.
-  // KC 제약은 그대로 둔다: KC는 개수가 많아 섞을 상대가 없는 경우가 드물고,
-  // 같은 개념만 연달아 붙이는 건 인터리빙의 본래 목적을 정면으로 깨기 때문이다.
+  // 2차: 타입 때문에 밀린 것(KC 제약은 여전히 지킨다). 3차: KC 때문에 밀린 것.
   //
-  // 고르는 방식: 직전 카드와 타입이 다른 후보 중에서, "남은 개수가 가장 많은 타입"의
-  // 가장 앞(=점수가 높은) 카드를 집는다. 그냥 가장 앞부터 집으면 수가 적은 타입이
-  // 먼저 소진되고 많은 타입이 꼬리에 몰려 결국 연속된다 — 많은 쪽부터 흘려보내야
-  // 끝까지 교대가 유지된다. 섞을 상대가 아예 없으면(단일 타입 덱) 순서대로 채운다.
-  const pending = [...deferredByType]
-  const blockedByKc = (item: Item) => item.kcId !== null && item.kcId === lastKc && run >= maxRun
-  while (budgetLeft >= cost && pending.length > 0) {
-    const eligible = pending.filter((item) => !blockedByKc(item))
-    if (eligible.length === 0) break // KC 제약에 막힌 것만 남았다 — 그건 다음 세션으로
-    const differentType = eligible.filter((item) => item.type !== lastType)
-    const pool = differentType.length > 0 ? differentType : eligible
-
-    const remainingByType = new Map<Item['type'], number>()
-    for (const item of pool) remainingByType.set(item.type, (remainingByType.get(item.type) ?? 0) + 1)
-    let bestType = pool[0].type
-    for (const [type, n] of remainingByType) {
-      if (n > (remainingByType.get(bestType) ?? 0)) bestType = type
-    }
-
-    const chosen = pool.find((item) => item.type === bestType)!
-    place(chosen)
-    pending.splice(pending.indexOf(chosen), 1)
-  }
+  // 왜 제약을 양보하는가 — 인터리빙은 순서를 다듬는 장치이지 학습량을 깎는 장치가
+  // 아니다(3.3 "정렬은 점수, 배치는 제약"). 그런데 실제 덱은 "플래시카드만"이거나
+  // "이제 막 만든 KC 하나에 카드 다섯 장"인 경우가 흔하고, 그럴 때 제약을 그대로
+  // 밀어붙이면 20분을 요청해도 두세 장에서 세션이 끝난다(예시 덱을 처음 넣었을 때
+  // 실제로 이 일이 벌어졌다 — 기초 KC 카드 5장 중 2장만 나왔다).
+  // 그래서 섞을 수 있을 때는 지키고, 섞을 상대가 없을 때만 양보한다.
+  // 순서는 타입 → KC: 같은 개념을 연달아 붙이는 쪽이 더 아쉬우므로 마지막에 푼다.
+  const stillBlocked = fillFrom(
+    deferredByType,
+    (item) => item.type,
+    () => lastType,
+    (item) => !blockedByKc(item),
+  )
+  // 2차에서 KC에 막혀 남은 것도 3차로 넘긴다(여기서 흘리면 그대로 사라진다).
+  // 원래 점수 순서를 잃지 않도록 ranked 순서로 다시 정렬해서 넘긴다.
+  const lastChance = new Set([...deferredByKc, ...stillBlocked].map((item) => item.id))
+  fillFrom(
+    ranked.filter((item) => lastChance.has(item.id)),
+    (item) => item.kcId,
+    () => lastKc,
+  )
 
   return plan
 }

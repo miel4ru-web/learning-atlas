@@ -84,20 +84,43 @@ describe('buildSession', () => {
     expect(plan[0].id).toBe(urgent.id)
   })
 
-  it('같은 KC가 maxConsecutiveSameKc회를 넘겨 연속되지 않는다', () => {
-    const sameKc = Array.from({ length: 6 }, () => flashcard({ kcId: 'kc-1' }))
-    const other = flashcard({ kcId: 'kc-2' })
-    const all = [...sameKc, other]
+  it('섞을 KC가 충분하면 같은 KC가 연속되지 않는다', () => {
+    const all = [
+      ...Array.from({ length: 2 }, () => flashcard({ kcId: 'kc-1' })),
+      ...Array.from({ length: 2 }, () => flashcard({ kcId: 'kc-2' })),
+      ...Array.from({ length: 2 }, () => flashcard({ kcId: 'kc-3' })),
+    ]
     const states = new Map(all.map((i) => [i.id, state({ itemId: i.id })]))
     const plan = buildSession(all, states, emptyElo, [], NOW, {
       budgetMinutes: 60,
+      maxConsecutiveSameKc: 1,
+    })
+    expect(plan).toHaveLength(6)
+    for (let i = 1; i < plan.length; i++) {
+      expect(plan[i].kcId).not.toBe(plan[i - 1].kcId)
+    }
+  })
+
+  it('섞을 다른 KC가 없으면 KC 제약도 양보한다 — 세션을 굶기지 않는다', () => {
+    // 이제 막 만든 KC 하나에 카드 여섯 장 같은 상황(예시 덱 첫 세션이 정확히 이랬다).
+    const sameKc = Array.from({ length: 6 }, () => flashcard({ kcId: 'kc-1' }))
+    const states = new Map(sameKc.map((i) => [i.id, state({ itemId: i.id })]))
+    const plan = buildSession(sameKc, states, emptyElo, [], NOW, {
+      budgetMinutes: 60,
       maxConsecutiveSameKc: 2,
     })
-    let run = 1
-    for (let i = 1; i < plan.length; i++) {
-      run = plan[i].kcId === plan[i - 1].kcId ? run + 1 : 1
-      expect(run).toBeLessThanOrEqual(2)
-    }
+    expect(plan).toHaveLength(6)
+  })
+
+  it('제약을 양보하더라도 예산은 그대로 지킨다', () => {
+    const sameKc = Array.from({ length: 10 }, () => flashcard({ kcId: 'kc-1' }))
+    const states = new Map(sameKc.map((i) => [i.id, state({ itemId: i.id })]))
+    // costPerCardMinutes 기본 0.75 → 예산 3분이면 4장
+    const plan = buildSession(sameKc, states, emptyElo, [], NOW, {
+      budgetMinutes: 3,
+      maxConsecutiveSameKc: 2,
+    })
+    expect(plan).toHaveLength(4)
   })
 
   it('섞을 타입이 충분하면 같은 활동 타입이 연속되지 않는다', () => {
@@ -129,20 +152,23 @@ describe('buildSession', () => {
     expect(plan).toHaveLength(5)
   })
 
-  it('타입 제약을 양보해도 KC 제약은 유지된다', () => {
-    // 같은 타입 + 같은 KC만 있는 덱: 2차 패스에서도 KC 연속 제한은 살아 있다.
-    const sameKc = Array.from({ length: 6 }, () => flashcard({ kcId: 'kc-1' }))
-    const states = new Map(sameKc.map((i) => [i.id, state({ itemId: i.id })]))
-    const plan = buildSession(sameKc, states, emptyElo, [], NOW, {
+  it('제약을 양보해도 후보는 하나도 흘리지 않는다(단계 사이에서 사라지지 않음)', () => {
+    // kc-1 플래시카드 4장 + kc-2 빈칸 1장. 타입 제약(1)에 걸린 카드가 2차 단계로,
+    // 거기서 다시 KC 제약(2)에 걸린 카드가 3차 단계로 넘어간다 — 중간에서 새면
+    // 여기 길이가 모자란다.
+    const all = [
+      ...Array.from({ length: 4 }, () => flashcard({ kcId: 'kc-1' })),
+      cloze({ kcId: 'kc-2' }),
+    ]
+    const states = new Map(all.map((i) => [i.id, state({ itemId: i.id })]))
+    const plan = buildSession(all, states, emptyElo, [], NOW, {
       budgetMinutes: 60,
       maxConsecutiveSameKc: 2,
-      maxConsecutiveSameType: 2,
+      maxConsecutiveSameType: 1,
     })
-    let run = 1
-    for (let i = 1; i < plan.length; i++) {
-      run = plan[i].kcId === plan[i - 1].kcId ? run + 1 : 1
-      expect(run).toBeLessThanOrEqual(2)
-    }
+    expect(plan).toHaveLength(5)
+    // 섞을 상대가 있는 앞부분에서는 제약이 실제로 지켜진다.
+    expect(plan[0].type).not.toBe(plan[1].type)
   })
 
   it('dailyReviewCap: 밀린 복습이 많아도 상위 N개만 오늘 후보가 된다', () => {

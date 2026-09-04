@@ -6,6 +6,7 @@ import { useState } from 'react'
 import type { Confidence, ErrorTag, Grade, InteractionSignals, Item } from '../core/types'
 import { useAtlas } from '../core/atlas'
 import { buildSession } from '../scheduler/session'
+import { seedDeck, SEED_DECK_SIZE } from '../core/seedDeck'
 import { RespondPanel } from '../activities/RespondPanel'
 
 const DEFAULT_BUDGET_MIN = 20
@@ -16,6 +17,7 @@ export function StudyView() {
   const [sessionIndex, setSessionIndex] = useState(0)
   const [confidence, setConfidence] = useState<Confidence | null>(null)
   const [budgetInput, setBudgetInput] = useState(String(DEFAULT_BUDGET_MIN))
+  const [seeding, setSeeding] = useState(false)
 
   // "카드" 화면 덱 필터에서 "이 카드로 학습 시작"을 눌렀으면 sessionScopeItemIds가
   // 차 있다 — buildSession의 후보 풀을 그 카드들로만 좁힌다. 세션 편성 로직
@@ -40,6 +42,14 @@ export function StudyView() {
 
   function toggleVacationMode() {
     atlas.saveStudyPrefs({ ...studyPrefs, vacationMode: !studyPrefs.vacationMode })
+  }
+
+  // 콜드스타트(6부 함정) — 카드가 하나도 없을 때만 보이는 맛보기 덱. 기존
+  // 가져오기 경로(merge)를 그대로 쓰므로 여러 번 눌러도 카드가 불어나지 않는다.
+  async function addSeedDeck() {
+    setSeeding(true)
+    await atlas.importBackup(seedDeck(), 'merge')
+    setSeeding(false)
   }
 
   function startSession() {
@@ -122,7 +132,18 @@ export function StudyView() {
           <button className="start" onClick={startSession} disabled={atlas.items.length === 0}>
             오늘 학습 시작
           </button>
-          {atlas.items.length === 0 && <p className="muted">먼저 카드를 추가하세요.</p>}
+          {atlas.items.length === 0 && (
+            <div className="empty-start">
+              <p className="muted">먼저 카드를 추가하세요.</p>
+              <button className="reveal" onClick={addSeedDeck} disabled={seeding}>
+                {seeding ? '넣는 중…' : `예시 덱 넣기 (${SEED_DECK_SIZE}장)`}
+              </button>
+              <p className="muted seed-note">
+                이 앱이 쓰는 학습 원리를 소재로 한 맛보기 덱입니다. 다섯 가지 활동 타입과
+                선수지식 연결을 한 번씩 보여줍니다.
+              </p>
+            </div>
+          )}
         </div>
       ) : current ? (
         <div className="card">
