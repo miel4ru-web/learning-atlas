@@ -9,15 +9,18 @@ import type {
   Interaction,
   CardState,
   KnowledgeComponent,
+  SchedulerSettings,
 } from './core/types'
 import * as db from './core/db'
-import { deriveAllCardStates, isLeech, againCount } from './scheduler/fsrs'
+import { deriveAllCardStates, isLeech, againCount, buildScheduler } from './scheduler/fsrs'
 import { deriveEloState, masteryProbability } from './scheduler/elo'
 import { buildSession, findUrgentKcIds } from './scheduler/session'
 import { formatDue } from './core/format'
 import { calibrationReport, calibrationLabel, calibrationWarning } from './core/calibration'
 import { RespondPanel } from './activities/RespondPanel'
 import { errorTagLabel } from './activities/ErrorTagPicker'
+import { Dashboard } from './analytics/Dashboard'
+import type { OptimizeResult } from './scheduler/optimizer'
 import './App.css'
 
 function groupByItem(interactions: Interaction[]): Map<string, Interaction[]> {
@@ -59,6 +62,7 @@ export default function App() {
   const [items, setItems] = useState<Item[]>([])
   const [interactions, setInteractions] = useState<Interaction[]>([])
   const [kcs, setKcs] = useState<KnowledgeComponent[]>([])
+  const [schedulerSettings, setSchedulerSettings] = useState<SchedulerSettings | undefined>(undefined)
   const [loading, setLoading] = useState(true)
   const [now, setNow] = useState(() => new Date())
 
@@ -86,14 +90,16 @@ export default function App() {
   const [kcPrereqIds, setKcPrereqIds] = useState<string[]>([])
 
   async function reload() {
-    const [allItems, allInteractions, allKcs] = await Promise.all([
+    const [allItems, allInteractions, allKcs, settings] = await Promise.all([
       db.getAllItems(),
       db.getAllInteractions(),
       db.getAllKCs(),
+      db.getSchedulerSettings(),
     ])
     setItems(allItems)
     setInteractions(allInteractions)
     setKcs(allKcs)
+    setSchedulerSettings(settings)
     setLoading(false)
     setNow(new Date())
   }
@@ -111,7 +117,21 @@ export default function App() {
     return map
   }, [items, interactions])
 
-  const cardStates = useMemo<Map<string, CardState>>(() => deriveAllCardStates(byItem), [byItem])
+  // v3: 저장된 재적합 파라미터가 있으면 그걸로, 없으면 FSRS-6 기본값으로.
+  // Atlas 4.2 — 스케줄러를 바꿔 끼우면 카드 상태는 이 로그 전체가 다시
+  // 계산된다(따로 저장된 review_state가 없으니 자동으로 그렇게 된다).
+  const activeScheduler = useMemo(
+    () =>
+      buildScheduler(
+        schedulerSettings ? { w: schedulerSettings.w, request_retention: schedulerSettings.requestRetention } : {},
+      ),
+    [schedulerSettings],
+  )
+
+  const cardStates = useMemo<Map<string, CardState>>(
+    () => deriveAllCardStates(byItem, activeScheduler),
+    [byItem, activeScheduler],
+  )
 
   const eloState = useMemo(() => deriveEloState(items, interactions), [items, interactions])
   const latestByItem = useMemo(() => latestPerItem(interactions), [interactions])
@@ -232,6 +252,22 @@ export default function App() {
     setKcPrereqIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]))
   }
 
+  async function handleApplyRefit(result: OptimizeResult) {
+    await db.saveSchedulerSettings({
+      w: result.weights,
+      requestRetention: result.requestRetention,
+      fittedAt: new Date().toISOString(),
+      testLossBefore: result.testLossBefore,
+      testLossAfter: result.testLossAfter,
+    })
+    await reload()
+  }
+
+  async function handleResetScheduler() {
+    await db.clearSchedulerSettings()
+    await reload()
+  }
+
   if (loading) {
     return (
       <main className="shell">
@@ -296,6 +332,19 @@ export default function App() {
           </div>
         )}
       </section>
+
+      <Dashboard
+        items={items}
+        interactions={interactions}
+        byItem={byItem}
+        cardStates={cardStates}
+        leechItemIds={leechItemIds}
+        now={now}
+        activeScheduler={activeScheduler}
+        usingCustomWeights={schedulerSettings !== undefined}
+        onApplyRefit={handleApplyRefit}
+        onResetScheduler={handleResetScheduler}
+      />
 
       {calibration.some((b) => b.total > 0) && (
         <section className="calibration">

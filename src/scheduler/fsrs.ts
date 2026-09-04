@@ -5,14 +5,30 @@
 // 순서대로 재생해 매번 계산한다 — Atlas 4.2의 핵심 결정: 스케줄러를
 // 교체해도(SM-2 → FSRS, 또는 FSRS 모수 재적합) 과거 로그로 전량 재계산 가능.
 
-import { fsrs, createEmptyCard, Rating, State, type Card, type Grade as FsrsGrade } from 'ts-fsrs'
+import {
+  fsrs,
+  createEmptyCard,
+  Rating,
+  State,
+  type Card,
+  type FSRS,
+  type FSRSParameters,
+  type Grade as FsrsGrade,
+} from 'ts-fsrs'
 import type { Grade, Interaction, CardState } from '../core/types'
 
 // 목표 파지율. Atlas 3.1: "목표 파지율을 정하면 간격은 역산된다."
-// 0.90 = 암기형 기본값(5부 매트릭스). 필요해지면 사용자 설정으로 뺀다.
-const scheduler = fsrs({ request_retention: 0.9 })
+// 0.90 = 암기형 기본값(5부 매트릭스). v3부터는 고정 상수가 아니라
+// buildScheduler()로 만든다 — 개인 로그로 재적합한 파라미터(scheduler/
+// optimizer.ts)를 넣어 바꿔치기할 수 있어야 하기 때문(Atlas 4.2: 스케줄러
+// 교체 시 과거 로그로 전량 재계산 가능해야 한다).
+export function buildScheduler(params: Partial<FSRSParameters> = {}): FSRS {
+  return fsrs({ request_retention: 0.9, ...params })
+}
 
-const GRADE_TO_RATING: Record<Grade, FsrsGrade> = {
+const defaultScheduler = buildScheduler()
+
+export const GRADE_TO_RATING: Record<Grade, FsrsGrade> = {
   again: Rating.Again,
   hard: Rating.Hard,
   good: Rating.Good,
@@ -42,8 +58,15 @@ function toCardState(itemId: string, card: Card): CardState {
 /**
  * itemId 하나의 Interaction들(오래된 순)을 처음부터 재생해 현재 카드 상태를 구한다.
  * interactions가 비어 있으면 "새 카드"(즉시 만기) 상태를 반환한다.
+ * scheduler를 지정하지 않으면 기본 파라미터(request_retention=0.9, FSRS-6 기본
+ * 가중치)를 쓴다 — 개인 재적합 결과를 반영하려면 buildScheduler()로 만든
+ * 인스턴스를 넘긴다(App.tsx가 저장된 설정을 로드해 이렇게 한다).
  */
-export function deriveCardState(itemId: string, interactions: Interaction[]): CardState {
+export function deriveCardState(
+  itemId: string,
+  interactions: Interaction[],
+  scheduler: FSRS = defaultScheduler,
+): CardState {
   const sorted = [...interactions].sort((a, b) => a.ts.localeCompare(b.ts))
   let card: Card = createEmptyCard(sorted.length > 0 ? new Date(sorted[0].ts) : new Date())
   for (const interaction of sorted) {
@@ -57,10 +80,11 @@ export function deriveCardState(itemId: string, interactions: Interaction[]): Ca
 /** 여러 아이템의 카드 상태를 한 번에 구한다. itemId → Interaction[] 로 묶어서 넘긴다. */
 export function deriveAllCardStates(
   interactionsByItem: Map<string, Interaction[]>,
+  scheduler: FSRS = defaultScheduler,
 ): Map<string, CardState> {
   const result = new Map<string, CardState>()
   for (const [itemId, interactions] of interactionsByItem) {
-    result.set(itemId, deriveCardState(itemId, interactions))
+    result.set(itemId, deriveCardState(itemId, interactions, scheduler))
   }
   return result
 }

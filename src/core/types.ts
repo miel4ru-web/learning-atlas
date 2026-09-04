@@ -100,3 +100,17 @@ export interface EloState {
   itemDifficulty: Map<string, number> // itemId → b
   kcMastery: Map<string, number> // kcId → theta
 }
+
+/**
+ * 개인 로그로 재적합한 FSRS 파라미터(Atlas 3부·4부 Policy). 이것만 저장하고
+ * CardState는 저장하지 않는다 — 스케줄러를 이걸로 바꿔 끼우면 과거 로그
+ * 전체가 새 파라미터로 재계산된다(Atlas 4.2). 저장된 게 없으면 FSRS-6
+ * 기본값(request_retention=0.9, default_w)을 쓴다.
+ */
+export interface SchedulerSettings {
+  w: number[]
+  requestRetention: number
+  fittedAt: string
+  testLossBefore: number
+  testLossAfter: number
+}

@@ -1,8 +1,18 @@
-// IndexedDB 접근 계층. 세 스토어: items·kcs(카드/지식요소 정의, 편집 가능)와
-// interactions(채점 로그, append-only — core/types.ts 주석 참고).
+// IndexedDB 접근 계층. items·kcs(카드/지식요소 정의, 편집 가능), interactions
+// (채점 로그, append-only — core/types.ts 주석 참고), settings(재적합된
+// 스케줄러 파라미터 — 단일 레코드, 없으면 FSRS 기본값 사용).
 
 import { openDB, type DBSchema, type IDBPDatabase } from 'idb'
-import type { Item, NewItem, Interaction, Grade, Confidence, ErrorTag, KnowledgeComponent } from './types'
+import type {
+  Item,
+  NewItem,
+  Interaction,
+  Grade,
+  Confidence,
+  ErrorTag,
+  KnowledgeComponent,
+  SchedulerSettings,
+} from './types'
 
 interface AtlasDB extends DBSchema {
   items: {
@@ -18,13 +28,19 @@ interface AtlasDB extends DBSchema {
     value: Interaction
     indexes: { byItem: string }
   }
+  settings: {
+    key: string
+    value: SchedulerSettings
+  }
 }
+
+const SCHEDULER_SETTINGS_KEY = 'scheduler'
 
 let dbPromise: Promise<IDBPDatabase<AtlasDB>> | null = null
 
 function getDB() {
   if (!dbPromise) {
-    dbPromise = openDB<AtlasDB>('learning-atlas', 3, {
+    dbPromise = openDB<AtlasDB>('learning-atlas', 4, {
       // idb는 upgrade가 반환하는 프로미스를 기다려준다 — versionchange 트랜잭션이
       // 마이그레이션(아래 3) 도중 조기 커밋되지 않도록 async 함수로 선언하고 await 한다.
       async upgrade(db, oldVersion, _newVersion, tx) {
@@ -51,6 +67,9 @@ function getDB() {
             }
             cursor = await cursor.continue()
           }
+        }
+        if (oldVersion < 4) {
+          db.createObjectStore('settings') // out-of-line key(SCHEDULER_SETTINGS_KEY) — keyPath 없음
         }
       },
     })
@@ -129,6 +148,21 @@ export async function addKC(name: string, prereqIds: string[]): Promise<Knowledg
 export async function getAllKCs(): Promise<KnowledgeComponent[]> {
   const db = await getDB()
   return db.getAll('kcs')
+}
+
+export async function getSchedulerSettings(): Promise<SchedulerSettings | undefined> {
+  const db = await getDB()
+  return db.get('settings', SCHEDULER_SETTINGS_KEY)
+}
+
+export async function saveSchedulerSettings(settings: SchedulerSettings): Promise<void> {
+  const db = await getDB()
+  await db.put('settings', settings, SCHEDULER_SETTINGS_KEY)
+}
+
+export async function clearSchedulerSettings(): Promise<void> {
+  const db = await getDB()
+  await db.delete('settings', SCHEDULER_SETTINGS_KEY)
 }
 
 // 4부 검증 체크리스트: 로그를 지우고 재생해도 같은 스케줄이 나와야 한다.

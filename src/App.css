@@ -369,6 +369,62 @@
   color: var(--hard);
 }
 
+/* ---- 대시보드 ---- */
+.dashboard h2 { font-size: 0.95rem; font-weight: 600; margin-bottom: 16px; }
+.dashboard h3 { font-size: 0.85rem; font-weight: 600; margin: 20px 0 8px; color: var(--text-muted); }
+
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+}
+.stat-cell {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px 10px;
+  display: grid;
+  gap: 2px;
+  text-align: center;
+}
+.stat-value { font-size: 1.4rem; font-weight: 600; font-variant-numeric: tabular-nums; }
+.stat-label { font-size: 0.72rem; color: var(--text-muted); }
+
+.forecast {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  align-items: end;
+  gap: 6px;
+  height: 108px;
+  padding-top: 8px;
+}
+.forecast-col { display: flex; flex-direction: column; align-items: center; gap: 4px; height: 100%; justify-content: flex-end; }
+.forecast-count { font-size: 0.75rem; font-variant-numeric: tabular-nums; }
+.forecast-bar { width: 100%; max-width: 28px; background: var(--accent); border-radius: 4px 4px 0 0; min-height: 4px; }
+.forecast-label { font-size: 0.68rem; white-space: nowrap; }
+
+.accuracy-row {
+  display: flex;
+  gap: 20px;
+  font-size: 0.9rem;
+  padding: 8px 0;
+}
+.accuracy-row strong { font-variant-numeric: tabular-nums; }
+
+.refit-note { font-size: 0.85rem; margin: 10px 0; color: var(--text-muted); }
+.refit-improved { color: var(--good); }
+.refit-result { margin-top: 12px; }
+.refit-result .scroll { overflow-x: auto; border: 1px solid var(--border); border-radius: 8px; }
+.refit-result table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+.refit-result th, .refit-result td {
+  padding: 8px 12px;
+  text-align: right;
+  border-bottom: 1px solid var(--border);
+  font-variant-numeric: tabular-nums;
+}
+.refit-result th[scope="col"]:first-child, .refit-result th[scope="row"] { text-align: left; font-variant-numeric: normal; }
+.refit-result tbody tr:last-child th, .refit-result tbody tr:last-child td { border-bottom: none; }
+.refit-result .start { margin-top: 10px; }
+
 /* ---- 격리된 카드 ---- */
 .leeches h2 { font-size: 0.95rem; font-weight: 600; margin-bottom: 6px; }
 .leeches ul { list-style: none; margin: 10px 0 0; padding: 0; }
