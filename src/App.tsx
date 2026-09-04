@@ -6,6 +6,7 @@ import { AtlasProvider } from './core/AtlasProvider'
 import { useAtlas } from './core/atlas'
 import { useHashRoute } from './shell/useHashRoute'
 import { TabBar } from './shell/TabBar'
+import { SideNav } from './shell/SideNav'
 import { VIEWS, VIEW_IDS, DEFAULT_VIEW } from './views/registry'
 import './App.css'
 
@@ -15,35 +16,40 @@ function Shell() {
 
   if (loading) {
     return (
-      <main className="shell">
-        <p className="muted">불러오는 중…</p>
-      </main>
+      <div className="app">
+        <main className="shell">
+          <p className="muted">불러오는 중…</p>
+        </main>
+      </div>
     )
   }
 
   const ActiveView = (VIEWS.find((v) => v.id === active) ?? VIEWS[0]).Component
 
   return (
-    <main className="shell">
-      <header className="topbar">
-        <h1>Learning Atlas</h1>
-        <p className="stat-line">
-          만기 <strong>{dueCount}</strong> · 전체 <strong>{items.length}</strong>
-          {leechItems.length > 0 && (
-            <>
-              {' '}
-              · 격리 <strong>{leechItems.length}</strong>
-            </>
-          )}
-        </p>
-      </header>
+    <div className="app">
+      <SideNav active={active} onNavigate={navigate} />
+      <main className="shell">
+        <header className="topbar">
+          <h1>Learning Atlas</h1>
+          <p className="stat-line">
+            만기 <strong>{dueCount}</strong> · 전체 <strong>{items.length}</strong>
+            {leechItems.length > 0 && (
+              <>
+                {' '}
+                · 격리 <strong>{leechItems.length}</strong>
+              </>
+            )}
+          </p>
+        </header>
 
-      <TabBar active={active} onNavigate={navigate} />
+        <TabBar active={active} onNavigate={navigate} />
 
-      <div className="view">
-        <ActiveView />
-      </div>
-    </main>
+        <div className="view">
+          <ActiveView />
+        </div>
+      </main>
+    </div>
   )
 }
 
