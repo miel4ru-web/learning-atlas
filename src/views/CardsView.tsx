@@ -2,10 +2,11 @@
 // 카드 추가/편집(ItemForm), 전체 목록(Deck: 검색·필터), 계속 틀려 격리된 카드.
 // 채점 로그는 여기서 건드리지 않는다.
 
-import { useState, type FormEvent } from 'react'
+import { useMemo, useState, type FormEvent } from 'react'
 import { useAtlas } from '../core/atlas'
 import { againCount } from '../scheduler/fsrs'
 import { masteryProbability } from '../scheduler/elo'
+import { flagLowQualityItems } from '../analytics/stats'
 import { ItemForm } from './ItemForm'
 import { Deck } from './Deck'
 import { KcGraph } from './KcGraph'
@@ -26,6 +27,13 @@ export function CardsView() {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [formNonce, setFormNonce] = useState(0)
   const editingItem = editingId ? atlas.items.find((i) => i.id === editingId) : undefined
+
+  // 저품질 문항 신고(Atlas 4.6) — 저장하지 않는 순수 집계라 매번 로그에서 다시 뽑는다.
+  const qualityReports = useMemo(
+    () => flagLowQualityItems(atlas.items, byItem),
+    [atlas.items, byItem],
+  )
+  const itemById = useMemo(() => new Map(atlas.items.map((i) => [i.id, i])), [atlas.items])
 
   function closeForm() {
     setEditingId(null)
@@ -161,6 +169,37 @@ export function CardsView() {
         )}
 
         <KcGraph kcs={kcs} kcMastery={eloState.kcMastery} />
+
+        {qualityReports.length > 0 && (
+          <section className="panel quality-flags">
+            <h2>점검이 필요한 카드</h2>
+            <p className="muted">
+              정답률이 한쪽 끝에 몰린 카드입니다. 너무 자주 틀리면 문항이나 정답이 잘못됐거나
+              카드 하나에 너무 많이 담긴 것이고, 오래 반복하도록 한 번도 안 틀렸다면 이제
+              정보가 없는 카드입니다.
+            </p>
+            <ul>
+              {qualityReports.map((report) => {
+                const item = itemById.get(report.itemId)
+                if (!item) return null
+                return (
+                  <li key={report.itemId}>
+                    <span className={`quality-badge quality-${report.flag}`}>
+                      {report.flag === 'broken' ? '자주 틀림' : '너무 쉬움'}
+                    </span>
+                    <span className="deck-front">{itemSummary(item)}</span>
+                    <span className="muted">
+                      정답률 {Math.round(report.accuracy * 100)}% ({report.reviews}회)
+                    </span>
+                    <button className="edit" onClick={() => startEdit(item.id)}>
+                      편집
+                    </button>
+                  </li>
+                )
+              })}
+            </ul>
+          </section>
+        )}
 
         {leechItems.length > 0 && (
           <section className="panel leeches">

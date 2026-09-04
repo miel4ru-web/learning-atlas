@@ -3,6 +3,56 @@
 
 import type { CardState, Interaction, Item } from '../core/types'
 
+// ---- 저품질 문항 신고(Atlas 4.6 콘텐츠 파이프라인) ----
+// 문서: "사용 후 b 보정(Elo) · 저품질 문항 자동 신고(정답률 < .2 또는 > .98)".
+//
+// 최소 리뷰 수를 문서보다 구체적으로 잡았다. 문서의 임계값은 여러 사람이 푸는
+// 문제은행을 전제하는데, 1인 덱에서는 표본이 적어 그냥 적용하면 오탐이 쏟아진다.
+// 특히 상단(너무 쉬움)은 다르다: 5번 연속 정답은 SRS에서 지극히 정상이라
+// 신고할 일이 아니고, "열 번 넘게 만났는데 한 번도 안 틀렸다"쯤 되어야 비로소
+// "이 카드는 이제 정보가 없다"는 신호가 된다. 반대로 하단(자주 틀림)은 표본이
+// 적어도 문제 자체가 이상할 가능성이 높아 더 일찍 알려주는 편이 낫다.
+const BROKEN_BELOW = 0.2
+const TOO_EASY_ABOVE = 0.98
+const MIN_REVIEWS_BROKEN = 5
+const MIN_REVIEWS_TOO_EASY = 10
+
+/** broken = 너무 자주 틀린다(문항·정답이 이상하거나 카드가 너무 크다), too-easy = 정보가 없다. */
+export type ItemQualityFlag = 'broken' | 'too-easy'
+
+export interface ItemQualityReport {
+  itemId: string
+  reviews: number
+  accuracy: number
+  flag: ItemQualityFlag
+}
+
+/**
+ * 카드별 정답률로 "점검이 필요한 카드"를 골라낸다. 저장하지 않는 순수 집계 —
+ * byItem(AtlasProvider가 이미 들고 있는 파생 상태)을 그대로 받아 쓴다.
+ * 신고 순서는 심한 것부터(정답률이 낮은 broken → 높은 too-easy).
+ */
+export function flagLowQualityItems(
+  items: Item[],
+  byItem: ReadonlyMap<string, Interaction[]>,
+): ItemQualityReport[] {
+  const reports: ItemQualityReport[] = []
+
+  for (const item of items) {
+    const log = byItem.get(item.id) ?? []
+    if (log.length === 0) continue
+    const accuracy = log.filter((i) => i.grade !== 'again').length / log.length
+
+    if (accuracy < BROKEN_BELOW && log.length >= MIN_REVIEWS_BROKEN) {
+      reports.push({ itemId: item.id, reviews: log.length, accuracy, flag: 'broken' })
+    } else if (accuracy > TOO_EASY_ABOVE && log.length >= MIN_REVIEWS_TOO_EASY) {
+      reports.push({ itemId: item.id, reviews: log.length, accuracy, flag: 'too-easy' })
+    }
+  }
+
+  return reports.sort((a, b) => a.accuracy - b.accuracy)
+}
+
 export interface Totals {
   totalItems: number
   totalReviews: number
