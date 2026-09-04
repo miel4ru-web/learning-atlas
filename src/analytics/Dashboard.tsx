@@ -5,7 +5,7 @@
 import { useMemo, useState } from 'react'
 import type { FSRS } from 'ts-fsrs'
 import type { CardState, EloState, Interaction, Item } from '../core/types'
-import { computeTotals, computeForecast } from './stats'
+import { computeTotals, computeForecast, countMisconceptions } from './stats'
 import { simulateAll, logLoss, rmse } from '../scheduler/simulate'
 import { optimizeParameters, type OptimizeResult, type NotEnoughData } from '../scheduler/optimizer'
 import { countBands, DESIRABLE_HIGH, DESIRABLE_LOW } from '../scheduler/selection'
@@ -67,6 +67,9 @@ export function Dashboard({
     return { points: points.length, logLoss: logLoss(points), rmse: rmse(points) }
   }, [byItem, activeScheduler])
 
+  // 오개념 집계(Atlas 3.4) — 태그를 달아둔 4지선다에서만 나온다.
+  const misconceptions = useMemo(() => countMisconceptions(items, byItem), [items, byItem])
+
   async function runRefit() {
     setRefitting(true)
     setRefitResult(null)
@@ -124,6 +127,26 @@ export function Dashboard({
           ))}
         </div>
       </section>
+
+      {misconceptions.length > 0 && (
+        <section className="panel misconceptions">
+          <h2>자주 걸리는 오개념</h2>
+          <p className="muted">
+            4지선다에서 고른 오답 선택지에 달아둔 라벨을 모은 것입니다. 여러 카드에 걸쳐
+            같은 라벨이 쌓인다면 문항이 아니라 개념 쪽을 다시 봐야 한다는 신호입니다.
+          </p>
+          <ul>
+            {misconceptions.map((m) => (
+              <li key={m.label}>
+                <span className="misconception-label">{m.label}</span>
+                <span className="muted">
+                  {m.count}회 · 카드 {m.itemIds.length}장
+                </span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       <section className="panel">
         <h2>난이도 밴드</h2>

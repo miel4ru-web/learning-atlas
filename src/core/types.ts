@@ -54,6 +54,18 @@ export interface McqItem extends ItemBase {
   prompt: string
   options: [string, string, string, string]
   correctIndex: 0 | 1 | 2 | 3
+  /**
+   * 오답 선택지별 오개념 라벨(Atlas 3.4 "오답 선택지 자체에 오개념 태그를 미리
+   * 붙여 둔다"). options와 길이·순서가 같고, 라벨을 안 단 선택지는 null.
+   * 정답 위치의 값은 쓰지 않는다.
+   *
+   * 로그에는 따로 저장하지 않는다 — v19부터 "몇 번을 골랐는지"(selectedIndex)가
+   * 남으므로, 그 인덱스로 이 표를 찾아보면 된다. 파생 상태를 저장하지 않는다는
+   * 원칙 그대로다. 대신 나중에 선택지 순서를 바꿔 편집하면 과거 로그의 해석도
+   * 같이 바뀐다(카드 내용을 고치면 과거 채점의 맥락도 달라지는 건 이 앱의 기존
+   * 성질과 같다).
+   */
+  distractorTags?: (string | null)[]
 }
 
 /**

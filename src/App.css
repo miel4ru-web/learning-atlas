@@ -571,6 +571,30 @@
 }
 .mcq-options button:hover { border-color: var(--accent); color: var(--accent); }
 
+/* ---- 오개념 태깅(v25) ---- */
+.mcq-tag { flex: 1 1 100%; font-size: 0.85rem; }
+.mcq-tag-help { font-size: 0.8rem; line-height: 1.5; }
+.misconception-note {
+  font-size: 0.88rem;
+  color: var(--hard);
+  border-left: 2px solid var(--hard);
+  padding-left: 10px;
+  margin: 0;
+  text-align: left;
+}
+.misconceptions ul { list-style: none; margin: 10px 0 0; padding: 0; }
+.misconceptions li {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.9rem;
+}
+.misconceptions li:last-child { border-bottom: 0; }
+.misconception-label { font-weight: 500; }
+
 /* ---- 자기 설명(v24) ---- */
 .free-text-form { display: grid; gap: 10px; width: 100%; }
 .free-text-form textarea {

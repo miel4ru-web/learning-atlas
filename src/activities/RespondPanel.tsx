@@ -185,10 +185,13 @@ function FreeTextRespond({ item, onGraded }: { item: FreeTextItem; onGraded: Gra
 function ObjectiveOutcome({
   grade,
   correctAnswerText,
+  misconception,
   onGraded,
 }: {
   grade: Grade
   correctAnswerText: string
+  /** 고른 오답에 미리 달아둔 오개념 라벨(Atlas 3.4). 있으면 왜 틀렸는지를 바로 짚어준다. */
+  misconception?: string | null
   /** 각 활동이 자기 신호(응답 원문 등)를 미리 감아서 넘겨준다. */
   onGraded: (grade: Grade, errorTag: ErrorTag | null) => void
 }) {
@@ -205,6 +208,7 @@ function ObjectiveOutcome({
   return (
     <div className="outcome outcome-incorrect">
       <p>오답입니다. 정답: {correctAnswerText}</p>
+      {misconception && <p className="misconception-note">{misconception}</p>}
       <ErrorTagPicker onPick={(tag) => onGraded('again', tag)} />
     </div>
   )
@@ -228,6 +232,7 @@ function McqRespond({ item, onGraded }: { item: McqItem; onGraded: Graded }) {
         <ObjectiveOutcome
           grade={gradeFromCorrectness(checkMcq(item, selected))}
           correctAnswerText={item.options[item.correctIndex]}
+          misconception={item.distractorTags?.[selected] ?? null}
           // 고른 선택지를 인덱스와 원문 둘 다 남긴다 — 인덱스는 3.4 오개념 태깅용,
           // 원문은 나중에 선택지 순서가 바뀌어도 로그를 읽을 수 있게 하는 보험.
           onGraded={(grade, tag) =>

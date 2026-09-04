@@ -53,6 +53,47 @@ export function flagLowQualityItems(
   return reports.sort((a, b) => a.accuracy - b.accuracy)
 }
 
+// ---- 오개념 집계(Atlas 3.4) ----
+// 저장하는 건 없다. "몇 번 선택지를 골랐나"(v19 selectedIndex)와 "그 선택지가 무슨
+// 오개념인가"(McqItem.distractorTags)를 로그 위에서 이어 붙이기만 한다.
+
+export interface MisconceptionCount {
+  label: string
+  count: number
+  /** 이 오개념이 나타난 카드들 — 같은 오개념이 여러 문항에 걸쳐 있으면 진짜 개념 결손이다. */
+  itemIds: string[]
+}
+
+/**
+ * 오답으로 고른 선택지에 붙은 오개념 라벨을 세어 많이 걸린 순으로 돌려준다.
+ * byItem은 이미 걸러진(사전 테스트 제외) 로그를 받는다 — AtlasProvider 참고.
+ */
+export function countMisconceptions(
+  items: Item[],
+  byItem: ReadonlyMap<string, Interaction[]>,
+): MisconceptionCount[] {
+  const counts = new Map<string, { count: number; itemIds: Set<string> }>()
+
+  for (const item of items) {
+    if (item.type !== 'mcq' || !item.distractorTags) continue
+    for (const log of byItem.get(item.id) ?? []) {
+      const picked = log.selectedIndex
+      if (picked === undefined || picked === item.correctIndex) continue
+      const label = item.distractorTags[picked]
+      if (!label) continue
+
+      const entry = counts.get(label) ?? { count: 0, itemIds: new Set<string>() }
+      entry.count += 1
+      entry.itemIds.add(item.id)
+      counts.set(label, entry)
+    }
+  }
+
+  return [...counts.entries()]
+    .map(([label, { count, itemIds }]) => ({ label, count, itemIds: [...itemIds] }))
+    .sort((a, b) => b.count - a.count || a.label.localeCompare(b.label))
+}
+
 export interface Totals {
   totalItems: number
   totalReviews: number

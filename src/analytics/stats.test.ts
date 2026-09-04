@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
-import { computeTotals, flagLowQualityItems } from './stats'
+import { computeTotals, countMisconceptions, flagLowQualityItems } from './stats'
 import type { Interaction } from '../core/types'
-import { flashcard, history, interaction } from '../test/factories'
+import { flashcard, history, interaction, mcq } from '../test/factories'
 
 const NOW = new Date('2026-01-10T12:00:00.000Z')
 
@@ -19,6 +19,60 @@ describe('computeTotals', () => {
     const log = history(item.id, ['good', 'again', 'good'])
     const totals = computeTotals([item], log, NOW)
     expect(totals).toMatchObject({ totalItems: 1, totalReviews: 3, activeDays: 3 })
+  })
+})
+
+describe('countMisconceptions(v25)', () => {
+  // 정답 0번, 오답 1~3번. 1번에만 오개념 라벨이 달려 있다.
+  const tagged = mcq({
+    id: 'q1',
+    correctIndex: 0,
+    distractorTags: [null, '인출과 재읽기를 혼동', null, null],
+  })
+
+  function log(itemId: string, selectedIndex: number, i = 0): Interaction {
+    return interaction(itemId, selectedIndex === 0 ? 'good' : 'again', i, { selectedIndex })
+  }
+
+  it('라벨이 달린 오답을 고른 횟수를 센다', () => {
+    const byItem = new Map([[tagged.id, [log('q1', 1, 0), log('q1', 1, 1)]]])
+    expect(countMisconceptions([tagged], byItem)).toEqual([
+      { label: '인출과 재읽기를 혼동', count: 2, itemIds: ['q1'] },
+    ])
+  })
+
+  it('정답을 고른 채점과 라벨 없는 오답은 세지 않는다', () => {
+    const byItem = new Map([[tagged.id, [log('q1', 0, 0), log('q1', 2, 1), log('q1', 3, 2)]]])
+    expect(countMisconceptions([tagged], byItem)).toEqual([])
+  })
+
+  it('selectedIndex가 없는 구버전 로그는 건너뛴다', () => {
+    const byItem = new Map([[tagged.id, [interaction('q1', 'again', 0)]]])
+    expect(countMisconceptions([tagged], byItem)).toEqual([])
+  })
+
+  it('태그가 없는 문항, 4지선다가 아닌 카드는 대상이 아니다', () => {
+    const plain = mcq({ id: 'q2', correctIndex: 0 })
+    const card = flashcard({ id: 'f1' })
+    const byItem = new Map([
+      [plain.id, [log('q2', 1)]],
+      [card.id, [interaction('f1', 'again', 0, { selectedIndex: 1 })]],
+    ])
+    expect(countMisconceptions([plain, card], byItem)).toEqual([])
+  })
+
+  it('여러 카드에 같은 라벨이 있으면 합쳐 세고, 많이 걸린 순으로 준다', () => {
+    const a = mcq({ id: 'qa', correctIndex: 0, distractorTags: [null, '같은 오개념', null, null] })
+    const b = mcq({ id: 'qb', correctIndex: 0, distractorTags: [null, '같은 오개념', null, null] })
+    const c = mcq({ id: 'qc', correctIndex: 0, distractorTags: [null, '드문 오개념', null, null] })
+    const byItem = new Map([
+      [a.id, [log('qa', 1, 0), log('qa', 1, 1)]],
+      [b.id, [log('qb', 1, 2)]],
+      [c.id, [log('qc', 1, 3)]],
+    ])
+    const result = countMisconceptions([a, b, c], byItem)
+    expect(result[0]).toEqual({ label: '같은 오개념', count: 3, itemIds: ['qa', 'qb'] })
+    expect(result[1]).toMatchObject({ label: '드문 오개념', count: 1 })
   })
 })
 

@@ -13,6 +13,11 @@ import { TYPE_LABEL } from './itemDisplay'
 const DEFAULT_STARTER = 'function solve() {\n  \n}'
 const DEFAULT_TESTS = '[{"args": [], "expected": null}]'
 
+/** 저장된 오개념 태그(null 허용, 길이 미정)를 폼이 쓰는 4칸 문자열 배열로 편다. */
+function mcqOptionsInitial(tags: (string | null)[] | undefined): string[] {
+  return Array.from({ length: 4 }, (_, i) => tags?.[i] ?? '')
+}
+
 interface Props {
   kcs: KnowledgeComponent[]
   initial?: Item
@@ -34,6 +39,12 @@ export function ItemForm({ kcs, initial, onDone }: Props) {
   )
   const [mcqCorrect, setMcqCorrect] = useState<number>(
     initial?.type === 'mcq' ? initial.correctIndex : 0,
+  )
+  // 오개념 태그는 선택지와 같은 길이로 들고 다닌다(빈 문자열 = 태그 없음).
+  const [mcqTags, setMcqTags] = useState<string[]>(
+    initial?.type === 'mcq'
+      ? mcqOptionsInitial(initial.distractorTags)
+      : ['', '', '', ''],
   )
   const [codePrompt, setCodePrompt] = useState(initial?.type === 'code' ? initial.prompt : '')
   const [codeStarter, setCodeStarter] = useState(
@@ -72,11 +83,14 @@ export function ItemForm({ kcs, initial, onDone }: Props) {
     }
     if (type === 'mcq') {
       if (!mcqPrompt.trim() || mcqOptions.some((o) => !o.trim())) return null
+      // 정답 자리는 비워서 저장한다 — 정답을 고른 건 오개념이 아니다.
+      const distractorTags = mcqTags.map((t, i) => (i === mcqCorrect ? null : t.trim() || null))
       return {
         type: 'mcq',
         prompt: mcqPrompt.trim(),
         options: mcqOptions as [string, string, string, string],
         correctIndex: mcqCorrect as 0 | 1 | 2 | 3,
+        ...(distractorTags.some((t) => t !== null) ? { distractorTags } : {}),
         kcId: selectedKc,
       }
     }
@@ -188,8 +202,23 @@ export function ItemForm({ kcs, initial, onDone }: Props) {
                   }
                   placeholder={`보기 ${i + 1}`}
                 />
+                {/* 오개념 태그(v25)는 오답 선택지에만 의미가 있다 — 정답 줄에는 숨긴다. */}
+                {mcqCorrect !== i && (
+                  <input
+                    className="mcq-tag"
+                    value={mcqTags[i]}
+                    onChange={(e) =>
+                      setMcqTags((prev) => prev.map((t, j) => (j === i ? e.target.value : t)))
+                    }
+                    placeholder="이 답을 고르는 이유 (선택)"
+                  />
+                )}
               </div>
             ))}
+            <p className="muted mcq-tag-help">
+              오답 선택지에 &quot;왜 이걸 고르게 되는지&quot;를 적어두면, 나중에 진단 화면에서
+              자주 걸리는 오개념으로 모아 볼 수 있습니다.
+            </p>
           </>
         )}
         {type === 'short' && (

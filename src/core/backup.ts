@@ -100,7 +100,10 @@ function isItem(v: unknown): v is Item {
         v.options.every((o) => typeof o === 'string') &&
         typeof v.correctIndex === 'number' &&
         v.correctIndex >= 0 &&
-        v.correctIndex <= 3
+        v.correctIndex <= 3 &&
+        (v.distractorTags === undefined ||
+          (Array.isArray(v.distractorTags) &&
+            v.distractorTags.every((t) => t === null || typeof t === 'string')))
       )
     case 'code':
       return (
