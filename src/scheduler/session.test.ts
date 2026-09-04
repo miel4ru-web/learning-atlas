@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import type { CardState, EloState } from '../core/types'
 import { buildSession, findUrgentKcIds } from './session'
 import { MASTERY_THETA } from './elo'
-import { flashcard, kc } from '../test/factories'
+import { cloze, flashcard, kc, mcq } from '../test/factories'
 
 const emptyElo: EloState = { itemDifficulty: new Map(), kcMastery: new Map() }
 const NOW = new Date('2026-02-01T00:00:00.000Z')
@@ -92,6 +92,51 @@ describe('buildSession', () => {
     const plan = buildSession(all, states, emptyElo, [], NOW, {
       budgetMinutes: 60,
       maxConsecutiveSameKc: 2,
+    })
+    let run = 1
+    for (let i = 1; i < plan.length; i++) {
+      run = plan[i].kcId === plan[i - 1].kcId ? run + 1 : 1
+      expect(run).toBeLessThanOrEqual(2)
+    }
+  })
+
+  it('섞을 타입이 충분하면 같은 활동 타입이 연속되지 않는다', () => {
+    // KC는 전부 다르게 둬서 KC 제약이 아니라 타입 제약만 시험한다.
+    const all = [
+      ...Array.from({ length: 3 }, (_, i) => flashcard({ kcId: `f-${i}` })),
+      ...Array.from({ length: 3 }, (_, i) => cloze({ kcId: `c-${i}` })),
+      ...Array.from({ length: 3 }, (_, i) => mcq({ kcId: `m-${i}` })),
+    ]
+    const states = new Map(all.map((i) => [i.id, state({ itemId: i.id })]))
+    const plan = buildSession(all, states, emptyElo, [], NOW, {
+      budgetMinutes: 60,
+      maxConsecutiveSameType: 1,
+    })
+    expect(plan).toHaveLength(9) // 완벽히 교대할 수 있으므로 하나도 밀리지 않는다
+    for (let i = 1; i < plan.length; i++) {
+      expect(plan[i].type).not.toBe(plan[i - 1].type)
+    }
+  })
+
+  it('섞을 다른 타입이 없으면 제약을 양보한다 — 세션을 굶기지 않는다', () => {
+    const only = Array.from({ length: 5 }, (_, i) => flashcard({ kcId: `kc-${i}` }))
+    const states = new Map(only.map((i) => [i.id, state({ itemId: i.id })]))
+    const plan = buildSession(only, states, emptyElo, [], NOW, {
+      budgetMinutes: 60,
+      maxConsecutiveSameType: 2,
+    })
+    // 인터리빙은 순서를 다듬는 장치이지 학습량을 깎는 장치가 아니다(3.3).
+    expect(plan).toHaveLength(5)
+  })
+
+  it('타입 제약을 양보해도 KC 제약은 유지된다', () => {
+    // 같은 타입 + 같은 KC만 있는 덱: 2차 패스에서도 KC 연속 제한은 살아 있다.
+    const sameKc = Array.from({ length: 6 }, () => flashcard({ kcId: 'kc-1' }))
+    const states = new Map(sameKc.map((i) => [i.id, state({ itemId: i.id })]))
+    const plan = buildSession(sameKc, states, emptyElo, [], NOW, {
+      budgetMinutes: 60,
+      maxConsecutiveSameKc: 2,
+      maxConsecutiveSameType: 2,
     })
     let run = 1
     for (let i = 1; i < plan.length; i++) {
