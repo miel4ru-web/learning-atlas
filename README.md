@@ -52,4 +52,9 @@ npm install
 npm run dev      # Vite 개발 서버
 npm run build    # tsc -b && vite build
 npm run lint     # oxlint
+npm test         # vitest — 스케줄러·집계·백업·재생 결정성 (fake-indexeddb로 DB 계층까지)
 ```
+
+`src/**/*.test.ts` 는 "로그를 재생하면 저장 순서·형태와 무관하게 같은 파생
+상태가 나온다"는 이벤트 소싱 불변식(`core/eventSourcing.test.ts`)을 포함해
+FSRS/Elo/세션 편성/캘리브레이션/백업을 고정한다.
