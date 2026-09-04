@@ -73,7 +73,11 @@ function isKnowledgeComponent(v: unknown): v is KnowledgeComponent {
     typeof v.name === 'string' &&
     typeof v.createdAt === 'string' &&
     Array.isArray(v.prereqIds) &&
-    v.prereqIds.every((p) => typeof p === 'string')
+    v.prereqIds.every((p) => typeof p === 'string') &&
+    (v.requestRetention === undefined ||
+      (typeof v.requestRetention === 'number' &&
+        v.requestRetention > 0 &&
+        v.requestRetention < 1))
   )
 }
 
@@ -147,10 +151,12 @@ export function parseBackup(text: string): ParseResult {
   if (raw.version !== BACKUP_VERSION) {
     return { ok: false, error: `지원하지 않는 백업 버전입니다 (${String(raw.version)}).` }
   }
-  if (raw.dbVersion !== DB_VERSION) {
+  // 더 낮은 버전의 백업은 받아들인다(레코드에 새 optional 필드가 없을 뿐이고,
+  // 읽는 쪽에서 기본값으로 폴백한다). 더 높은 버전 = 이 앱이 모르는 스키마라 거부.
+  if (typeof raw.dbVersion !== 'number' || raw.dbVersion > DB_VERSION) {
     return {
       ok: false,
-      error: `다른 스키마 버전(${String(raw.dbVersion)})에서 만든 백업입니다 — 현재는 v${DB_VERSION}.`,
+      error: `더 새로운 스키마 버전(${String(raw.dbVersion)})에서 만든 백업입니다 — 현재는 v${DB_VERSION}.`,
     }
   }
   const data = raw.data

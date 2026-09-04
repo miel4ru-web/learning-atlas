@@ -9,7 +9,7 @@ function snapshot(): DbSnapshot {
   return {
     items: [a, b],
     interactions: [interaction(a.id, 'good', 0), interaction(a.id, 'again', 1, { confidence: 3 })],
-    kcs: [kc({ id: 'kc-1' })],
+    kcs: [kc({ id: 'kc-1', requestRetention: 0.95 })],
     schedulerSettings: null,
   }
 }
@@ -45,9 +45,19 @@ describe('parseBackup 거부 케이스', () => {
     f.format = 'anki'
     expect(parseBackup(JSON.stringify(f))).toMatchObject({ ok: false })
   })
-  it('스키마 버전이 다르면', () => {
+  it('더 새로운 스키마 버전은 거부', () => {
     const f = ok()
     f.dbVersion = DB_VERSION + 1
+    expect(parseBackup(JSON.stringify(f))).toMatchObject({ ok: false })
+  })
+  it('더 낮은 스키마 버전은 받아들인다(구버전 백업 복원)', () => {
+    const f = ok()
+    f.dbVersion = DB_VERSION - 1
+    expect(parseBackup(JSON.stringify(f))).toMatchObject({ ok: true })
+  })
+  it('KC 목표 파지율이 0~1 밖이면 거부', () => {
+    const f = ok()
+    f.data.kcs[0].requestRetention = 1
     expect(parseBackup(JSON.stringify(f))).toMatchObject({ ok: false })
   })
   it('형태가 깨진 레코드가 있으면', () => {

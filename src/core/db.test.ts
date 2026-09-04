@@ -43,6 +43,27 @@ describe('items', () => {
   })
 })
 
+describe('KC 목표 파지율', () => {
+  it('addKC에 넘긴 파지율이 저장되고, 안 넘기면 필드가 없다', async () => {
+    await db.addKC('exam', [], 0.95)
+    await db.addKC('casual', [])
+    const kcs = await db.getAllKCs()
+    expect(kcs.find((k) => k.name === 'exam')!.requestRetention).toBe(0.95)
+    expect(kcs.find((k) => k.name === 'casual')!.requestRetention).toBeUndefined()
+  })
+
+  it('updateKC로 파지율을 바꾸거나 지운다', async () => {
+    const kc = await db.addKC('k', [], 0.9)
+    await db.updateKC({ ...kc, requestRetention: 0.8 })
+    expect((await db.getAllKCs())[0].requestRetention).toBe(0.8)
+
+    const withoutField = { ...kc }
+    delete withoutField.requestRetention
+    await db.updateKC(withoutField)
+    expect((await db.getAllKCs())[0].requestRetention).toBeUndefined()
+  })
+})
+
 describe('KC 삭제', () => {
   it('KC를 지우면 그 KC를 쓰던 카드의 kcId가 null이 되고, 다른 KC의 선수지식에서도 빠진다', async () => {
     await db.importAll(

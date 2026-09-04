@@ -12,6 +12,8 @@ import { errorTagLabel } from '../activities/ErrorTagPicker'
 import { ItemForm } from './ItemForm'
 import { TYPE_LABEL, itemSummary } from './itemDisplay'
 
+const RETENTION_PERCENTS = ['80', '85', '90', '95', '98']
+
 export function CardsView() {
   const atlas = useAtlas()
   const { kcs, kcById, eloState, cardStates, latestByItem, leechItems, leechItemIds, byItem, now } =
@@ -19,6 +21,7 @@ export function CardsView() {
 
   const [kcName, setKcName] = useState('')
   const [kcPrereqIds, setKcPrereqIds] = useState<string[]>([])
+  const [kcRetention, setKcRetention] = useState('') // '' = 전역 기본값 사용
 
   // 카드 편집: editingId가 있으면 ItemForm이 그 카드로 채워진 편집 모드가 된다.
   // formNonce는 "추가"로 저장한 뒤 폼을 비우기 위한 리마운트 키.
@@ -39,13 +42,22 @@ export function CardsView() {
   async function handleAddKc(e: FormEvent) {
     e.preventDefault()
     if (!kcName.trim()) return
-    await atlas.addKC(kcName.trim(), kcPrereqIds)
+    const retention = kcRetention ? Number(kcRetention) / 100 : undefined
+    await atlas.addKC(kcName.trim(), kcPrereqIds, retention)
     setKcName('')
     setKcPrereqIds([])
+    setKcRetention('')
   }
 
   function toggleKcPrereq(id: string) {
     setKcPrereqIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]))
+  }
+
+  function setKcRetentionValue(kc: (typeof kcs)[number], percent: string) {
+    const next = { ...kc }
+    if (percent === '') delete next.requestRetention
+    else next.requestRetention = Number(percent) / 100
+    atlas.updateKC(next)
   }
 
   return (
@@ -65,6 +77,24 @@ export function CardsView() {
                     <span className="kc-name">{kc.name}</span>
                     <span className="kc-mastery muted">숙달도 {pct}%</span>
                     {prereqNames && <span className="kc-prereq muted">선수: {prereqNames}</span>}
+                    <label className="kc-retention muted" title="이 지식 요소의 목표 파지율">
+                      목표
+                      <select
+                        value={
+                          kc.requestRetention != null
+                            ? String(Math.round(kc.requestRetention * 100))
+                            : ''
+                        }
+                        onChange={(e) => setKcRetentionValue(kc, e.target.value)}
+                      >
+                        <option value="">기본</option>
+                        {RETENTION_PERCENTS.map((p) => (
+                          <option key={p} value={p}>
+                            {p}%
+                          </option>
+                        ))}
+                      </select>
+                    </label>
                     <button
                       className="delete kc-delete"
                       onClick={() => atlas.deleteKC(kc.id)}
@@ -102,6 +132,17 @@ export function CardsView() {
                 ))}
               </div>
             )}
+            <label className="kc-retention-field muted">
+              목표 파지율
+              <select value={kcRetention} onChange={(e) => setKcRetention(e.target.value)}>
+                <option value="">기본 (전역)</option>
+                {RETENTION_PERCENTS.map((p) => (
+                  <option key={p} value={p}>
+                    {p}%
+                  </option>
+                ))}
+              </select>
+            </label>
             <button type="submit">지식 요소 추가</button>
           </form>
         </section>

@@ -38,7 +38,7 @@ const SCHEDULER_SETTINGS_KEY = 'scheduler'
 
 // 현재 IndexedDB 스키마 버전. 백업 파일에도 같이 적어(core/backup.ts) 다른
 // 버전에서 만든 파일을 가져오려 할 때 걸러낸다.
-export const DB_VERSION = 4
+export const DB_VERSION = 5
 
 let dbPromise: Promise<IDBPDatabase<AtlasDB>> | null = null
 
@@ -74,6 +74,11 @@ function getDB() {
         }
         if (oldVersion < 4) {
           db.createObjectStore('settings') // out-of-line key(SCHEDULER_SETTINGS_KEY) — keyPath 없음
+        }
+        if (oldVersion < 5) {
+          // KnowledgeComponent에 optional requestRetention 추가(Atlas 5부). 스토어
+          // 구조는 그대로 — 기존 KC 레코드는 필드 없이 남고, 읽는 쪽에서 전역
+          // 기본값으로 폴백한다. 마이그레이션할 데이터가 없어 버전 표식만 올린다.
         }
       },
     })
@@ -150,11 +155,21 @@ export async function getInteractionsForItem(itemId: string): Promise<Interactio
   return db.getAllFromIndex('interactions', 'byItem', itemId)
 }
 
-export async function addKC(name: string, prereqIds: string[]): Promise<KnowledgeComponent> {
+export async function addKC(
+  name: string,
+  prereqIds: string[],
+  requestRetention?: number,
+): Promise<KnowledgeComponent> {
   const kc: KnowledgeComponent = { id: newId(), name, prereqIds, createdAt: new Date().toISOString() }
+  if (requestRetention !== undefined) kc.requestRetention = requestRetention
   const db = await getDB()
   await db.add('kcs', kc)
   return kc
+}
+
+export async function updateKC(kc: KnowledgeComponent): Promise<void> {
+  const db = await getDB()
+  await db.put('kcs', kc)
 }
 
 // KC를 지우면 그 KC를 가리키던 카드는 지우지 않고 kcId만 null로 되돌린다(채점

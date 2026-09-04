@@ -66,21 +66,45 @@ export function AtlasProvider({ children }: { children: ReactNode }) {
     return map
   }, [items, interactions])
 
-  // v3: 저장된 재적합 파라미터가 있으면 그걸로, 없으면 FSRS-6 기본값으로.
-  // Atlas 4.2 — 스케줄러를 바꿔 끼우면 카드 상태는 이 로그 전체가 다시 계산된다.
+  // v3: 저장된 재적합 파라미터가 있으면 그 가중치(w)로, 없으면 FSRS-6 기본값으로.
+  // v11(Atlas 5부): 목표 파지율은 전역 하나가 아니라 KC마다 다를 수 있다 —
+  // w(재적합 결과)는 전역이고 파지율만 KC별로 갈아 끼운다.
+  const globalRetention = schedulerSettings?.requestRetention ?? 0.9
+  const customWeights = schedulerSettings?.w
+
+  // Dashboard의 모델 정확도(3.6 시뮬레이션)는 파지율과 무관하므로 전역 하나면 된다.
   const activeScheduler = useMemo(
-    () =>
-      buildScheduler(
-        schedulerSettings
-          ? { w: schedulerSettings.w, request_retention: schedulerSettings.requestRetention }
-          : {},
-      ),
-    [schedulerSettings],
+    () => buildScheduler(customWeights ? { w: customWeights, request_retention: globalRetention } : {}),
+    [customWeights, globalRetention],
   )
 
+  // 아이템 → (그 KC의 목표 파지율로 만든) 스케줄러. 등장하는 파지율 값마다
+  // 인스턴스를 하나만 미리 만들어 두고, 반환 함수는 조회만 한다.
+  const schedulerForItem = useMemo(() => {
+    const retentionOfKc = new Map(kcs.map((k) => [k.id, k.requestRetention]))
+    const itemKc = new Map(items.map((it) => [it.id, it.kcId]))
+
+    const retentions = new Set<number>([globalRetention])
+    for (const k of kcs) if (k.requestRetention != null) retentions.add(k.requestRetention)
+
+    const byRetention = new Map<number, ReturnType<typeof buildScheduler>>()
+    for (const r of retentions) {
+      byRetention.set(
+        r,
+        buildScheduler(customWeights ? { w: customWeights, request_retention: r } : { request_retention: r }),
+      )
+    }
+
+    return (itemId: string) => {
+      const kcId = itemKc.get(itemId) ?? null
+      const r = (kcId !== null ? retentionOfKc.get(kcId) : undefined) ?? globalRetention
+      return byRetention.get(r) ?? byRetention.get(globalRetention)!
+    }
+  }, [kcs, items, customWeights, globalRetention])
+
   const cardStates = useMemo<Map<string, CardState>>(
-    () => deriveAllCardStates(byItem, activeScheduler),
-    [byItem, activeScheduler],
+    () => deriveAllCardStates(byItem, schedulerForItem),
+    [byItem, schedulerForItem],
   )
   const eloState = useMemo(() => deriveEloState(items, interactions), [items, interactions])
   const latestByItem = useMemo(() => latestPerItem(interactions), [interactions])
@@ -124,8 +148,15 @@ export function AtlasProvider({ children }: { children: ReactNode }) {
     [reload],
   )
   const addKC = useCallback<AtlasData['addKC']>(
-    async (name, prereqIds) => {
-      await db.addKC(name, prereqIds)
+    async (name, prereqIds, requestRetention) => {
+      await db.addKC(name, prereqIds, requestRetention)
+      await reload()
+    },
+    [reload],
+  )
+  const updateKC = useCallback<AtlasData['updateKC']>(
+    async (kc) => {
+      await db.updateKC(kc)
       await reload()
     },
     [reload],
@@ -200,6 +231,7 @@ export function AtlasProvider({ children }: { children: ReactNode }) {
       addItem,
       updateItem,
       addKC,
+      updateKC,
       deleteKC,
       deleteItem,
       recordInteraction,
@@ -230,6 +262,7 @@ export function AtlasProvider({ children }: { children: ReactNode }) {
       addItem,
       updateItem,
       addKC,
+      updateKC,
       deleteKC,
       deleteItem,
       recordInteraction,

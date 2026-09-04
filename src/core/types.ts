@@ -20,6 +20,13 @@ export interface KnowledgeComponent {
   name: string
   prereqIds: string[] // 이 KC를 "준비된" 상태로 보려면 먼저 숙달해야 하는 KC들
   createdAt: string
+  /**
+   * 이 KC에 속한 카드의 목표 파지율(Atlas 5부 "매트릭스"). 없으면 전역 기본값
+   * (재적합 설정의 requestRetention, 없으면 0.90)을 쓴다. 높일수록 간격이 짧아져
+   * 복습이 잦아진다 — 시험 임박 과목은 0.95, 교양은 0.85 식으로 카드가 아니라
+   * 개념 단위로 조절한다. (v5 데이터 호환을 위해 optional.)
+   */
+  requestRetention?: number
 }
 
 interface ItemBase {

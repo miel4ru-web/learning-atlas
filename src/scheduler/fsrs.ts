@@ -77,14 +77,19 @@ export function deriveCardState(
   return toCardState(itemId, card)
 }
 
-/** 여러 아이템의 카드 상태를 한 번에 구한다. itemId → Interaction[] 로 묶어서 넘긴다. */
+/**
+ * 여러 아이템의 카드 상태를 한 번에 구한다. itemId → Interaction[] 로 묶어서 넘긴다.
+ * scheduler 자리에 함수를 주면 아이템마다 다른 스케줄러를 쓸 수 있다 — KC별 목표
+ * 파지율(Atlas 5부)을 반영하려고 AtlasProvider가 이렇게 넘긴다.
+ */
 export function deriveAllCardStates(
   interactionsByItem: Map<string, Interaction[]>,
-  scheduler: FSRS = defaultScheduler,
+  scheduler: FSRS | ((itemId: string) => FSRS) = defaultScheduler,
 ): Map<string, CardState> {
+  const resolve = typeof scheduler === 'function' ? scheduler : () => scheduler
   const result = new Map<string, CardState>()
   for (const [itemId, interactions] of interactionsByItem) {
-    result.set(itemId, deriveCardState(itemId, interactions, scheduler))
+    result.set(itemId, deriveCardState(itemId, interactions, resolve(itemId)))
   }
   return result
 }
