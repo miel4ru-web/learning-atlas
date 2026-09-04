@@ -1,9 +1,11 @@
-// Atlas 4.4 세션 오케스트레이터 + 3.3 문항 선택 정책(선수지식 게이팅·인터리빙) +
-// 2부 ERR(leech 격리·재출제)를 v2 규모에 맞게 단순화해 구현한다. "오늘 N분"을
-// 누르면 나오는 고정 순서 — 이 배열을 한 번 만들어 세션 동안 그대로 따라간다.
+// Atlas 4.4 세션 오케스트레이터 + 3.3 문항 선택 정책(선수지식 게이팅·인터리빙·
+// 바람직한 어려움 밴드) + 2부 ERR(leech 격리·재출제)를 v2 규모에 맞게 단순화해
+// 구현한다. "오늘 N분"을 누르면 나오는 고정 순서 — 이 배열을 한 번 만들어 세션
+// 동안 그대로 따라간다.
 
 import type { CardState, EloState, Item, KnowledgeComponent } from '../core/types'
 import { isMastered } from './elo'
+import { bandOf, bandRank, predictedRecall } from './selection'
 
 export interface SessionOptions {
   budgetMinutes: number
@@ -41,6 +43,9 @@ function isReady(kc: KnowledgeComponent | undefined, mastery: Map<string, number
  *    단, leechItemIds에 속한 카드는 복습 후보에서도 뺀다: 같은 방식으로
  *    계속 틀리는 카드를 계속 들이미는 건 도움이 안 된다.
  * 2. urgentKcIds에 속한 KC의 복습은 due 순서를 제치고 맨 앞으로 온다(재출제).
+ * 2b. 그다음은 "바람직한 어려움" 밴드 순(selection.ts) — 예측 인출률이 0.70–0.85인
+ *     카드가 먼저, 과학습(>0.85) 카드가 맨 뒤. 같은 밴드 안에서만 due 순서를 본다.
+ *     v1부터 계산만 되고 안 쓰이던 Elo 문항 난이도 b를 여기서 처음 쓴다.
  * 3. 신규(한 번도 채점되지 않은) 카드는 KC 선수지식이 준비된 것만 후보가 된다
  *    — 복습은 게이팅하지 않는다: 이미 시작한 카드를 선수지식 미달을 이유로
  *    멈추면 그 자체로 파지가 끊긴다.
@@ -80,6 +85,12 @@ export function buildSession(
     const aUrgent = a.kcId !== null && urgentKcIds.has(a.kcId)
     const bUrgent = b.kcId !== null && urgentKcIds.has(b.kcId)
     if (aUrgent !== bUrgent) return aUrgent ? -1 : 1
+
+    // 바람직한 어려움 밴드 순 — 같은 밴드 안에서만 만기일로 가른다.
+    const aRank = bandRank(bandOf(predictedRecall(a, eloState)))
+    const bRank = bandRank(bandOf(predictedRecall(b, eloState)))
+    if (aRank !== bRank) return aRank - bRank
+
     return cardStates.get(a.id)!.due.getTime() - cardStates.get(b.id)!.due.getTime()
   })
   fresh.sort((a, b) => a.createdAt.localeCompare(b.createdAt))

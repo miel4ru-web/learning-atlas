@@ -13,6 +13,8 @@ const INITIAL_DIFFICULTY = 0
 
 // 학습자 θ는 빠르게, 문항 난이도 b는 느리게 움직인다 — 문항 난이도가
 // 매 응답마다 요동치면 "밴드 유지" 같은 다음 선택 로직이 불안정해진다.
+// (그 선택 로직이 v4의 scheduler/selection.ts다 — itemDifficulty를 실제로 읽는
+// 첫 소비자. 여기 K_ITEM을 키우면 그쪽 밴드 판정이 출렁인다.)
 const K_LEARNER = 32
 const K_ITEM = 16
 

@@ -15,6 +15,7 @@ import * as db from './core/db'
 import { deriveAllCardStates, isLeech, againCount, buildScheduler } from './scheduler/fsrs'
 import { deriveEloState, masteryProbability } from './scheduler/elo'
 import { buildSession, findUrgentKcIds } from './scheduler/session'
+import { bandOf, bandLabel, predictedRecall } from './scheduler/selection'
 import { formatDue } from './core/format'
 import { calibrationReport, calibrationLabel, calibrationWarning } from './core/calibration'
 import { RespondPanel } from './activities/RespondPanel'
@@ -338,6 +339,7 @@ export default function App() {
         interactions={interactions}
         byItem={byItem}
         cardStates={cardStates}
+        eloState={eloState}
         leechItemIds={leechItemIds}
         now={now}
         activeScheduler={activeScheduler}
@@ -504,6 +506,8 @@ export default function App() {
               const state = cardStates.get(item.id)
               const kc = item.kcId ? kcById.get(item.kcId) : undefined
               const latest = latestByItem.get(item.id)
+              // 예측 회상률은 한 번이라도 복습해 Elo 난이도가 잡힌 카드에만 의미가 있다.
+              const recall = state && state.state !== 'new' ? predictedRecall(item, eloState) : null
               return (
                 <li key={item.id}>
                   <span className="deck-type muted">{TYPE_LABEL[item.type]}</span>
@@ -511,6 +515,14 @@ export default function App() {
                   {kc && <span className="kc-badge kc-badge-sm">{kc.name}</span>}
                   {latest?.errorTag && (
                     <span className="error-tag-badge">{errorTagLabel(latest.errorTag)}</span>
+                  )}
+                  {recall !== null && (
+                    <span
+                      className={`band-badge band-${bandOf(recall)}`}
+                      title={`예측 회상률 — ${bandLabel(bandOf(recall))}`}
+                    >
+                      {Math.round(recall * 100)}%
+                    </span>
                   )}
                   {leechItemIds.has(item.id) && <span className="leech-badge">격리</span>}
                   <span className="deck-due muted">{state ? formatDue(state.due, now) : ''}</span>

@@ -4,16 +4,18 @@
 
 import { useMemo, useState } from 'react'
 import type { FSRS } from 'ts-fsrs'
-import type { CardState, Interaction, Item } from '../core/types'
+import type { CardState, EloState, Interaction, Item } from '../core/types'
 import { computeTotals, computeForecast } from './stats'
 import { simulateAll, logLoss, rmse } from '../scheduler/simulate'
 import { optimizeParameters, type OptimizeResult, type NotEnoughData } from '../scheduler/optimizer'
+import { countBands, DESIRABLE_HIGH, DESIRABLE_LOW } from '../scheduler/selection'
 
 interface Props {
   items: Item[]
   interactions: Interaction[]
   byItem: ReadonlyMap<string, Interaction[]>
   cardStates: ReadonlyMap<string, CardState>
+  eloState: EloState
   leechItemIds: ReadonlySet<string>
   now: Date
   activeScheduler: FSRS
@@ -36,6 +38,7 @@ export function Dashboard({
   interactions,
   byItem,
   cardStates,
+  eloState,
   leechItemIds,
   now,
   activeScheduler,
@@ -53,6 +56,11 @@ export function Dashboard({
     [cardStates, leechItemIds, now],
   )
   const maxForecast = Math.max(1, ...forecast.map((f) => f.count))
+
+  const bands = useMemo(
+    () => countBands(items, cardStates, eloState, leechItemIds),
+    [items, cardStates, eloState, leechItemIds],
+  )
 
   const accuracy = useMemo(() => {
     const points = simulateAll(byItem, activeScheduler)
@@ -114,6 +122,66 @@ export function Dashboard({
           </div>
         ))}
       </div>
+
+      <h3>난이도 밴드</h3>
+      <p className="muted">
+        복습 후보 카드(신규·격리 제외)를 지금 다시 풀면 얼마나 맞힐지로 나눈 것 —
+        {' '}
+        {Math.round(DESIRABLE_LOW * 100)}–{Math.round(DESIRABLE_HIGH * 100)}%가 "바람직한 어려움"
+        구간이고, 세션은 이 구간을 먼저 배치합니다.
+      </p>
+      {bands.total > 0 ? (
+        <>
+          <div className="band-bar">
+            {bands.desirable > 0 && (
+              <span
+                className="band-seg band-desirable"
+                style={{ flexGrow: bands.desirable }}
+                title={`적정 ${bands.desirable}`}
+              />
+            )}
+            {bands.tooHard > 0 && (
+              <span
+                className="band-seg band-too-hard"
+                style={{ flexGrow: bands.tooHard }}
+                title={`너무 어려움 ${bands.tooHard}`}
+              />
+            )}
+            {bands.unknown > 0 && (
+              <span
+                className="band-seg band-unknown"
+                style={{ flexGrow: bands.unknown }}
+                title={`정보 없음 ${bands.unknown}`}
+              />
+            )}
+            {bands.tooEasy > 0 && (
+              <span
+                className="band-seg band-too-easy"
+                style={{ flexGrow: bands.tooEasy }}
+                title={`너무 쉬움 ${bands.tooEasy}`}
+              />
+            )}
+          </div>
+          <ul className="band-legend">
+            <li>
+              <span className="band-dot band-desirable" /> 적정 <strong>{bands.desirable}</strong>
+            </li>
+            <li>
+              <span className="band-dot band-too-hard" /> 너무 어려움 <strong>{bands.tooHard}</strong>
+            </li>
+            <li>
+              <span className="band-dot band-too-easy" /> 너무 쉬움 <strong>{bands.tooEasy}</strong>
+            </li>
+            {bands.unknown > 0 && (
+              <li>
+                <span className="band-dot band-unknown" /> 정보 없음 <strong>{bands.unknown}</strong>
+              </li>
+            )}
+          </ul>
+        </>
+      ) : (
+        <p className="muted">복습 이력이 쌓이면 카드별 예측 난이도를 보여줍니다.</p>
+      )}
 
       <h3>모델 정확도</h3>
       <p className="muted">
