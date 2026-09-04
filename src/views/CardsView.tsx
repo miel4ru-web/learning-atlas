@@ -267,7 +267,9 @@ export function CardsView() {
 
       <div className="cards-main">
       {atlas.items.length === 0 && leechItems.length === 0 && (
-        <p className="muted">아직 카드가 없습니다. 왼쪽에서 추가하세요.</p>
+        <section className="panel empty-note">
+          <p className="muted">아직 카드가 없습니다. 위에서 첫 카드를 추가해 보세요.</p>
+        </section>
       )}
 
       {leechItems.length > 0 && (

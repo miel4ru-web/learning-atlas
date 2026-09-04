@@ -29,7 +29,8 @@
 /* 카드 화면 레이아웃 컨테이너 — 좁은 화면에선 그냥 세로 스택 */
 .cards-layout { display: grid; gap: 20px; }
 .cards-forms,
-.cards-main { display: grid; gap: 20px; }
+.cards-main { display: grid; gap: 20px; align-content: start; }
+.empty-note { text-align: center; padding: 44px 20px; }
 
 /* ---- 상단 탭 바 (좁은 화면 전용) ---- */
 .tabbar {
@@ -99,7 +100,7 @@
 
   .shell {
     max-width: 1080px;
-    padding: 36px 44px 88px;
+    padding: 34px 32px 88px;
     gap: 24px;
   }
 
@@ -107,26 +108,26 @@
   .view-diagnostics {
     display: block;
     column-count: 2;
-    column-gap: 24px;
+    column-gap: 22px;
   }
   .view-diagnostics > .panel {
     break-inside: avoid;
-    margin: 0 0 24px;
+    margin: 0 0 22px;
   }
 
-  /* 카드: 왼쪽 입력 폼(sticky) + 오른쪽 목록 */
-  .view-cards { display: block; }
-  .cards-layout {
-    grid-template-columns: 360px minmax(0, 1fr);
-    gap: 24px;
+  /* 카드: 입력 폼 2열을 위에, 목록을 아래에 — 화면 가운데로 모아 넓은 화면의
+     여백 과다를 막는다(예전엔 폼|목록 좌우 분할이라 한쪽이 비면 크게 떴다). */
+  .view-cards {
+    max-width: 900px;
+    margin: 0 auto;
+  }
+  .cards-layout { gap: 22px; }
+  .cards-forms {
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
     align-items: start;
   }
-  .cards-forms {
-    gap: 24px;
-    position: sticky;
-    top: 24px;
-  }
-  .cards-main { gap: 24px; }
+  .cards-main { gap: 22px; }
 
   /* 학습·데이터: 좁은 폭으로 가운데 정렬 */
   .view-study,
@@ -322,7 +323,8 @@
 .kc-list li {
   display: flex;
   align-items: center;
-  gap: 10px;
+  flex-wrap: wrap;
+  gap: 6px 10px;
   padding: 10px 0;
   border-bottom: 1px solid var(--border);
   font-size: 0.9rem;
