@@ -100,6 +100,14 @@ export async function getAllItems(): Promise<Item[]> {
   return db.getAll('items')
 }
 
+// 카드 내용 편집. id·createdAt은 그대로 두고 put으로 덮어쓴다. 채점 로그
+// (interactions)는 itemId로 연결돼 있어 그대로 유지된다 — 내용을 고쳐도
+// FSRS·Elo 재생은 등급·시각만 보므로 스케줄이 깨지지 않는다.
+export async function updateItem(item: Item): Promise<void> {
+  const db = await getDB()
+  await db.put('items', item)
+}
+
 export async function deleteItem(itemId: string): Promise<void> {
   const db = await getDB()
   const tx = db.transaction(['items', 'interactions'], 'readwrite')

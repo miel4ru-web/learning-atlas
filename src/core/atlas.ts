@@ -50,6 +50,7 @@ export interface AtlasData {
   // ---- 액션(DB를 바꾸고 reload까지 한 번에) ----
   reload: () => Promise<void>
   addItem: (input: NewItem) => Promise<void>
+  updateItem: (item: Item) => Promise<void>
   addKC: (name: string, prereqIds: string[]) => Promise<void>
   deleteKC: (kcId: string) => Promise<void>
   deleteItem: (itemId: string) => Promise<void>

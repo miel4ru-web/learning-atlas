@@ -250,6 +250,10 @@
 .mcq-option-row input:not([type="radio"]) { flex: 1; }
 .error-text { color: var(--again); font-size: 0.85rem; margin: 0; }
 
+.item-edit-type { margin-bottom: 12px; }
+.form-actions { display: flex; gap: 8px; align-items: center; }
+.form-actions .reveal { padding: 10px 16px; }
+
 /* ---- 세션 시작 패널 ---- */
 .session-start {
   border: 1px dashed var(--border);
@@ -379,14 +383,23 @@
 }
 .deck-front { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .deck-due { font-size: 0.85rem; white-space: nowrap; }
-.delete {
+.delete,
+.edit {
   border: none;
   background: none;
   color: var(--text-muted);
   cursor: pointer;
   font-size: 0.85rem;
+  white-space: nowrap;
 }
 .delete:hover { color: var(--again); }
+.edit:hover { color: var(--accent); }
+
+.deck li.editing {
+  background: var(--bg);
+  box-shadow: inset 3px 0 0 var(--accent);
+  border-radius: 4px;
+}
 
 .deck-type {
   font-size: 0.72rem;
