@@ -1,23 +1,20 @@
 // "카드" 화면 — 학습 대상의 정의를 관리한다. 지식 요소(KC)와 선수지식 DAG,
-// 카드 추가/편집(ItemForm), 전체 목록(예측 회상률·만기·오답 태그 배지),
-// 계속 틀려 격리된 카드. 채점 로그는 여기서 건드리지 않는다.
+// 카드 추가/편집(ItemForm), 전체 목록(Deck: 검색·필터), 계속 틀려 격리된 카드.
+// 채점 로그는 여기서 건드리지 않는다.
 
 import { useState, type FormEvent } from 'react'
 import { useAtlas } from '../core/atlas'
 import { againCount } from '../scheduler/fsrs'
 import { masteryProbability } from '../scheduler/elo'
-import { bandOf, bandLabel, predictedRecall } from '../scheduler/selection'
-import { formatDue } from '../core/format'
-import { errorTagLabel } from '../activities/ErrorTagPicker'
 import { ItemForm } from './ItemForm'
-import { TYPE_LABEL, itemSummary } from './itemDisplay'
+import { Deck } from './Deck'
+import { itemSummary } from './itemDisplay'
 
 const RETENTION_PERCENTS = ['80', '85', '90', '95', '98']
 
 export function CardsView() {
   const atlas = useAtlas()
-  const { kcs, kcById, eloState, cardStates, latestByItem, leechItems, leechItemIds, byItem, now } =
-    atlas
+  const { kcs, kcById, eloState, leechItems, byItem } = atlas
 
   const [kcName, setKcName] = useState('')
   const [kcPrereqIds, setKcPrereqIds] = useState<string[]>([])
@@ -177,47 +174,7 @@ export function CardsView() {
           </section>
         )}
 
-        {atlas.items.length > 0 && (
-          <section className="panel deck">
-            <h2>전체 카드</h2>
-            <ul>
-              {atlas.items.map((item) => {
-                const state = cardStates.get(item.id)
-                const kc = item.kcId ? kcById.get(item.kcId) : undefined
-                const latest = latestByItem.get(item.id)
-                // 예측 회상률은 한 번이라도 복습해 Elo 난이도가 잡힌 카드에만 의미가 있다.
-                const recall =
-                  state && state.state !== 'new' ? predictedRecall(item, eloState) : null
-                return (
-                  <li key={item.id} className={item.id === editingId ? 'editing' : undefined}>
-                    <span className="deck-type muted">{TYPE_LABEL[item.type]}</span>
-                    <span className="deck-front">{itemSummary(item)}</span>
-                    {kc && <span className="kc-badge kc-badge-sm">{kc.name}</span>}
-                    {latest?.errorTag && (
-                      <span className="error-tag-badge">{errorTagLabel(latest.errorTag)}</span>
-                    )}
-                    {recall !== null && (
-                      <span
-                        className={`band-badge band-${bandOf(recall)}`}
-                        title={`예측 회상률 — ${bandLabel(bandOf(recall))}`}
-                      >
-                        {Math.round(recall * 100)}%
-                      </span>
-                    )}
-                    {leechItemIds.has(item.id) && <span className="leech-badge">격리</span>}
-                    <span className="deck-due muted">{state ? formatDue(state.due, now) : ''}</span>
-                    <button className="edit" onClick={() => startEdit(item.id)}>
-                      편집
-                    </button>
-                    <button className="delete" onClick={() => atlas.deleteItem(item.id)}>
-                      삭제
-                    </button>
-                  </li>
-                )
-              })}
-            </ul>
-          </section>
-        )}
+        {atlas.items.length > 0 && <Deck editingId={editingId} onEdit={startEdit} />}
       </div>
     </div>
   )

@@ -381,6 +381,46 @@
   cursor: pointer;
 }
 
+/* ---- 덱 검색·필터 ---- */
+.deck-filter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 10px;
+}
+.deck-search {
+  flex: 1 1 160px;
+  min-width: 130px;
+}
+.deck-filter .deck-search,
+.deck-filter select {
+  padding: 6px 9px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.82rem;
+}
+.deck-filter-chips { display: flex; flex-wrap: wrap; gap: 4px; }
+.chip {
+  padding: 5px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 0.76rem;
+}
+.chip.active {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--accent-bg, transparent);
+}
+.deck-filter-reset { padding: 6px 12px; font-size: 0.82rem; }
+.deck-count { font-size: 0.8rem; margin-bottom: 8px; font-variant-numeric: tabular-nums; }
+
 .deck ul {
   list-style: none;
   margin: 0;
