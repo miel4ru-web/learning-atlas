@@ -45,7 +45,7 @@ function Shell() {
 
         <TabBar active={active} onNavigate={navigate} />
 
-        <div className="view">
+        <div className={`view view-${active}`}>
           <ActiveView />
         </div>
       </main>

@@ -52,7 +52,7 @@ export function DataView() {
   }
 
   return (
-    <section className="backup">
+    <section className="panel backup">
       <h2>데이터</h2>
       <p className="muted">
         카드·채점 로그·지식 요소·스케줄러 설정을 JSON 파일 하나로 내보내고 되돌립니다. 이 앱은

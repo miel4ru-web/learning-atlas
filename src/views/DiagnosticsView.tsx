@@ -26,7 +26,7 @@ export function DiagnosticsView() {
       />
 
       {a.calibration.some((b) => b.total > 0) && (
-        <section className="calibration">
+        <section className="panel calibration">
           <h2>캘리브레이션</h2>
           <div className="calibration-bars">
             {a.calibration.map((b) => (

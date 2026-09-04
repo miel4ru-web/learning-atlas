@@ -87,44 +87,47 @@ export function Dashboard({
   }
 
   return (
-    <section className="dashboard">
-      <h2>대시보드</h2>
-
-      <div className="stat-grid">
-        <div className="stat-cell">
-          <span className="stat-value">{totals.totalReviews}</span>
-          <span className="stat-label">전체 리뷰</span>
-        </div>
-        <div className="stat-cell">
-          <span className="stat-value">{totals.totalItems}</span>
-          <span className="stat-label">전체 카드</span>
-        </div>
-        <div className="stat-cell">
-          <span className="stat-value">{totals.activeDays}</span>
-          <span className="stat-label">학습한 날</span>
-        </div>
-        <div className="stat-cell">
-          <span className="stat-value">{totals.currentStreak}</span>
-          <span className="stat-label">연속 학습일</span>
-        </div>
-      </div>
-
-      <h3>다음 7일 예상 부하</h3>
-      <div className="forecast">
-        {forecast.map((f) => (
-          <div className="forecast-col" key={f.dateKey}>
-            <span className="forecast-count">{f.count}</span>
-            <div
-              className="forecast-bar"
-              style={{ height: `${Math.max(4, (f.count / maxForecast) * 64)}px` }}
-            />
-            <span className="forecast-label muted">{f.label}</span>
+    <>
+      <section className="panel stat-panel">
+        <div className="stat-grid">
+          <div className="stat-cell">
+            <span className="stat-value">{totals.totalReviews}</span>
+            <span className="stat-label">전체 리뷰</span>
           </div>
-        ))}
-      </div>
+          <div className="stat-cell">
+            <span className="stat-value">{totals.totalItems}</span>
+            <span className="stat-label">전체 카드</span>
+          </div>
+          <div className="stat-cell">
+            <span className="stat-value">{totals.activeDays}</span>
+            <span className="stat-label">학습한 날</span>
+          </div>
+          <div className="stat-cell">
+            <span className="stat-value">{totals.currentStreak}</span>
+            <span className="stat-label">연속 학습일</span>
+          </div>
+        </div>
+      </section>
 
-      <h3>난이도 밴드</h3>
-      <p className="muted">
+      <section className="panel">
+        <h2>다음 7일 예상 부하</h2>
+        <div className="forecast">
+          {forecast.map((f) => (
+            <div className="forecast-col" key={f.dateKey}>
+              <span className="forecast-count">{f.count}</span>
+              <div
+                className="forecast-bar"
+                style={{ height: `${Math.max(4, (f.count / maxForecast) * 64)}px` }}
+              />
+              <span className="forecast-label muted">{f.label}</span>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="panel">
+        <h2>난이도 밴드</h2>
+        <p className="muted">
         복습 후보 카드(신규·격리 제외)를 지금 다시 풀면 얼마나 맞힐지로 나눈 것 —
         {' '}
         {Math.round(DESIRABLE_LOW * 100)}–{Math.round(DESIRABLE_HIGH * 100)}%가 "바람직한 어려움"
@@ -182,28 +185,32 @@ export function Dashboard({
       ) : (
         <p className="muted">복습 이력이 쌓이면 카드별 예측 난이도를 보여줍니다.</p>
       )}
+      </section>
 
-      <h3>모델 정확도</h3>
-      <p className="muted">
-        지금 쓰는 스케줄러가 실제 리뷰 결과를 얼마나 잘 맞혔는지(3.6 오프라인 시뮬레이션) —
-        각 리뷰 직전 예측한 회상 확률과 실제 정답 여부를 비교한 값. 낮을수록 좋다.
-      </p>
-      {accuracy.points > 0 ? (
-        <div className="accuracy-row">
-          <span>
-            log loss <strong>{accuracy.logLoss.toFixed(4)}</strong>
-          </span>
-          <span>
-            RMSE <strong>{accuracy.rmse.toFixed(4)}</strong>
-          </span>
-          <span className="muted">({accuracy.points}개 예측)</span>
-        </div>
-      ) : (
-        <p className="muted">같은 카드를 두 번 이상 복습해야 예측 정확도를 잴 수 있습니다.</p>
-      )}
+      <section className="panel">
+        <h2>모델 정확도</h2>
+        <p className="muted">
+          지금 쓰는 스케줄러가 실제 리뷰 결과를 얼마나 잘 맞혔는지(3.6 오프라인 시뮬레이션) —
+          각 리뷰 직전 예측한 회상 확률과 실제 정답 여부를 비교한 값. 낮을수록 좋다.
+        </p>
+        {accuracy.points > 0 ? (
+          <div className="accuracy-row">
+            <span>
+              log loss <strong>{accuracy.logLoss.toFixed(4)}</strong>
+            </span>
+            <span>
+              RMSE <strong>{accuracy.rmse.toFixed(4)}</strong>
+            </span>
+            <span className="muted">({accuracy.points}개 예측)</span>
+          </div>
+        ) : (
+          <p className="muted">같은 카드를 두 번 이상 복습해야 예측 정확도를 잴 수 있습니다.</p>
+        )}
+      </section>
 
-      <h3>개인 로그로 재적합</h3>
-      <p className="muted">
+      <section className="panel refit-panel">
+        <h2>개인 로그로 재적합</h2>
+        <p className="muted">
         {usingCustomWeights
           ? '지금은 재적합된 파라미터를 쓰고 있습니다.'
           : '지금은 FSRS-6 기본 파라미터(7억 건의 외부 리뷰로 학습됨)를 쓰고 있습니다.'}{' '}
@@ -265,11 +272,12 @@ export function Dashboard({
         </div>
       )}
 
-      {usingCustomWeights && (
-        <button className="reveal" onClick={onResetScheduler}>
-          기본 파라미터로 되돌리기
-        </button>
-      )}
-    </section>
+        {usingCustomWeights && (
+          <button className="reveal" onClick={onResetScheduler}>
+            기본 파라미터로 되돌리기
+          </button>
+        )}
+      </section>
+    </>
   )
 }

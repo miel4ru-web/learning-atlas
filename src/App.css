@@ -1,22 +1,35 @@
-/* ---- 레이아웃: 좁은 화면 = 단일 컬럼 + 상단 탭 바, 데스크톱 = 사이드바 ---- */
+/* ---- 레이아웃 ----
+   좁은 화면: 단일 컬럼 + 상단 탭 바 (모바일).
+   >=900px: 좌측 사이드바 + 넓은 본문 + 화면별 다단 레이아웃 (데스크톱 최적화). */
 .app { min-height: 100vh; }
 
 .shell {
-  max-width: 560px;
+  max-width: 620px;
   margin: 0 auto;
-  padding: 32px 20px 80px;
+  padding: 28px 18px 72px;
   display: grid;
-  gap: 20px;
+  gap: 18px;
   align-content: start;
 }
 
-/* 한 화면(view) 안에서 세로로 쌓이는 섹션 간격 — 예전 .shell 직속 섹션과 동일하게. */
-.view {
-  display: grid;
-  gap: 32px;
-}
+.view { display: grid; gap: 20px; }
 
 .muted { color: var(--text-muted); }
+
+/* ---- 패널: 각 섹션을 카드로 ---- */
+.panel {
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface);
+  padding: 20px;
+}
+.panel h2 { font-size: 0.95rem; font-weight: 600; margin: 0 0 12px; }
+.stat-panel { padding: 14px; }
+
+/* 카드 화면 레이아웃 컨테이너 — 좁은 화면에선 그냥 세로 스택 */
+.cards-layout { display: grid; gap: 20px; }
+.cards-forms,
+.cards-main { display: grid; gap: 20px; }
 
 /* ---- 상단 탭 바 (좁은 화면 전용) ---- */
 .tabbar {
@@ -67,7 +80,7 @@
 @media (min-width: 900px) {
   .app {
     display: grid;
-    grid-template-columns: 216px minmax(0, 1fr);
+    grid-template-columns: 232px minmax(0, 1fr);
   }
   .sidenav {
     display: block;
@@ -82,10 +95,45 @@
   }
   .tabbar { display: none; }
   .topbar h1 { display: none; }
-  .topbar { justify-content: flex-end; }
+  .topbar { justify-content: flex-end; margin-bottom: 4px; }
+
   .shell {
-    max-width: 820px;
-    padding: 40px 40px 96px;
+    max-width: 1080px;
+    padding: 36px 44px 88px;
+    gap: 24px;
+  }
+
+  /* 진단: 패널을 2열로 흘려보낸다(다단) */
+  .view-diagnostics {
+    display: block;
+    column-count: 2;
+    column-gap: 24px;
+  }
+  .view-diagnostics > .panel {
+    break-inside: avoid;
+    margin: 0 0 24px;
+  }
+
+  /* 카드: 왼쪽 입력 폼(sticky) + 오른쪽 목록 */
+  .view-cards { display: block; }
+  .cards-layout {
+    grid-template-columns: 360px minmax(0, 1fr);
+    gap: 24px;
+    align-items: start;
+  }
+  .cards-forms {
+    gap: 24px;
+    position: sticky;
+    top: 24px;
+  }
+  .cards-main { gap: 24px; }
+
+  /* 학습·데이터: 좁은 폭으로 가운데 정렬 */
+  .view-study,
+  .view-data {
+    max-width: 620px;
+    width: 100%;
+    margin: 0 auto;
   }
 }
 
@@ -159,7 +207,7 @@
   margin-bottom: 12px;
 }
 
-.type-tabs { display: flex; gap: 6px; margin-bottom: 12px; }
+.type-tabs { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
 .type-tabs button {
   padding: 6px 12px;
   border-radius: 999px;
@@ -451,10 +499,7 @@
   color: var(--hard);
 }
 
-/* ---- 대시보드 ---- */
-.dashboard h2 { font-size: 0.95rem; font-weight: 600; margin-bottom: 16px; }
-.dashboard h3 { font-size: 0.85rem; font-weight: 600; margin: 20px 0 8px; color: var(--text-muted); }
-
+/* ---- 대시보드(진단) 패널 내부 ---- */
 .stat-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);

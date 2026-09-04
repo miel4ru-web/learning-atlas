@@ -119,8 +119,9 @@ export function CardsView() {
   }
 
   return (
-    <>
-      <section className="kcs">
+    <div className="cards-layout">
+      <div className="cards-forms">
+      <section className="panel kcs">
         <h2>지식 요소</h2>
         {kcs.length > 0 && (
           <ul className="kc-list">
@@ -175,7 +176,7 @@ export function CardsView() {
         </form>
       </section>
 
-      <section className="add-item">
+      <section className="panel add-item">
         <h2>카드 추가</h2>
         <div className="type-tabs">
           {(['flashcard', 'cloze', 'mcq', 'code'] as ItemType[]).map((t) => (
@@ -262,9 +263,15 @@ export function CardsView() {
           <button type="submit">추가</button>
         </form>
       </section>
+      </div>
+
+      <div className="cards-main">
+      {atlas.items.length === 0 && leechItems.length === 0 && (
+        <p className="muted">아직 카드가 없습니다. 왼쪽에서 추가하세요.</p>
+      )}
 
       {leechItems.length > 0 && (
-        <section className="leeches">
+        <section className="panel leeches">
           <h2>격리된 카드</h2>
           <p className="muted">계속 틀려서(다시 등급 4회 이상) 세션에서 잠시 뺐습니다.</p>
           <ul>
@@ -279,7 +286,7 @@ export function CardsView() {
       )}
 
       {atlas.items.length > 0 && (
-        <section className="deck">
+        <section className="panel deck">
           <h2>전체 카드</h2>
           <ul>
             {atlas.items.map((item) => {
@@ -316,6 +323,7 @@ export function CardsView() {
           </ul>
         </section>
       )}
-    </>
+      </div>
+    </div>
   )
 }
