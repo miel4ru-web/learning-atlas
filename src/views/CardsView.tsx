@@ -8,6 +8,7 @@ import { againCount } from '../scheduler/fsrs'
 import { masteryProbability } from '../scheduler/elo'
 import { ItemForm } from './ItemForm'
 import { Deck } from './Deck'
+import { KcGraph } from './KcGraph'
 import { itemSummary } from './itemDisplay'
 
 const RETENTION_PERCENTS = ['80', '85', '90', '95', '98']
@@ -70,7 +71,7 @@ export function CardsView() {
                 const prereqNames = kc.prereqIds.map((id) => kcById.get(id)?.name ?? '?').join(', ')
                 const usedBy = atlas.items.filter((it) => it.kcId === kc.id).length
                 return (
-                  <li key={kc.id}>
+                  <li key={kc.id} id={`kc-row-${kc.id}`}>
                     <span className="kc-name">{kc.name}</span>
                     <span className="kc-mastery muted">숙달도 {pct}%</span>
                     {prereqNames && <span className="kc-prereq muted">선수: {prereqNames}</span>}
@@ -158,6 +159,8 @@ export function CardsView() {
             <p className="muted">아직 카드가 없습니다. 위에서 첫 카드를 추가해 보세요.</p>
           </section>
         )}
+
+        <KcGraph kcs={kcs} kcMastery={eloState.kcMastery} />
 
         {leechItems.length > 0 && (
           <section className="panel leeches">
