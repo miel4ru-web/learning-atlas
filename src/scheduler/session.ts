@@ -54,7 +54,7 @@ function isReady(kc: KnowledgeComponent | undefined, mastery: Map<string, number
  */
 export function buildSession(
   items: Item[],
-  cardStates: Map<string, CardState>,
+  cardStates: ReadonlyMap<string, CardState>,
   eloState: EloState,
   kcs: KnowledgeComponent[],
   now: Date,
@@ -119,8 +119,8 @@ export function buildSession(
 
 /**
  * urgentKcIds 계산: 각 KC에 대해 "그 KC를 가진 아이템들 중 가장 최근 Interaction"이
- * concept 오답이었는지 본다. App.tsx가 interactions를 들고 있으니 여기서 순수
- * 함수로 뽑아 buildSession에 넘긴다.
+ * concept 오답이었는지 본다. AtlasProvider가 interactions를 들고 있으니 거기서
+ * 이 순수 함수로 뽑아 buildSession에 넘긴다.
  */
 export function findUrgentKcIds(
   items: Item[],

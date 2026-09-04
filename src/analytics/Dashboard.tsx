@@ -1,6 +1,6 @@
 // Atlas v3 — 분석 대시보드(ANL) + 오프라인 시뮬레이션(3.6) + 개인 재적합(3부).
-// App.tsx가 이미 들고 있는 파생 상태(byItem·cardStates·activeScheduler)를
-// 그대로 받아서 보여주기만 한다 — 여기서 새로 저장하는 건 없다.
+// AtlasProvider가 이미 들고 있는 파생 상태(byItem·cardStates·activeScheduler)를
+// DiagnosticsView가 그대로 넘겨주고, 여기서는 보여주기만 한다 — 새로 저장하는 건 없다.
 
 import { useMemo, useState } from 'react'
 import type { FSRS } from 'ts-fsrs'

@@ -60,7 +60,7 @@ function toCardState(itemId: string, card: Card): CardState {
  * interactions가 비어 있으면 "새 카드"(즉시 만기) 상태를 반환한다.
  * scheduler를 지정하지 않으면 기본 파라미터(request_retention=0.9, FSRS-6 기본
  * 가중치)를 쓴다 — 개인 재적합 결과를 반영하려면 buildScheduler()로 만든
- * 인스턴스를 넘긴다(App.tsx가 저장된 설정을 로드해 이렇게 한다).
+ * 인스턴스를 넘긴다(AtlasProvider가 저장된 설정을 로드해 이렇게 한다).
  */
 export function deriveCardState(
   itemId: string,

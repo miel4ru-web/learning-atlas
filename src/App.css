@@ -3,10 +3,39 @@
   margin: 0 auto;
   padding: 32px 20px 80px;
   display: grid;
+  gap: 20px;
+}
+
+/* 한 화면(view) 안에서 세로로 쌓이는 섹션 간격 — 예전 .shell 직속 섹션과 동일하게. */
+.view {
+  display: grid;
   gap: 32px;
 }
 
 .muted { color: var(--text-muted); }
+
+/* ---- 탭 바(셸) ---- */
+.tabbar {
+  display: flex;
+  gap: 2px;
+  overflow-x: auto;
+  border-bottom: 1px solid var(--border);
+  scrollbar-width: none;
+}
+.tabbar::-webkit-scrollbar { display: none; }
+.tab {
+  flex: none;
+  padding: 10px 14px;
+  border: none;
+  background: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 0.9rem;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+}
+.tab:hover { color: var(--text); }
+.tab.active { color: var(--accent); border-bottom-color: var(--accent); }
 
 .topbar {
   display: flex;
