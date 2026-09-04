@@ -2,7 +2,7 @@
 // interactions(채점 로그, append-only — core/types.ts 주석 참고).
 
 import { openDB, type DBSchema, type IDBPDatabase } from 'idb'
-import type { Item, Interaction, Grade, Confidence, KnowledgeComponent } from './types'
+import type { Item, NewItem, Interaction, Grade, Confidence, ErrorTag, KnowledgeComponent } from './types'
 
 interface AtlasDB extends DBSchema {
   items: {
@@ -24,8 +24,10 @@ let dbPromise: Promise<IDBPDatabase<AtlasDB>> | null = null
 
 function getDB() {
   if (!dbPromise) {
-    dbPromise = openDB<AtlasDB>('learning-atlas', 2, {
-      upgrade(db, oldVersion) {
+    dbPromise = openDB<AtlasDB>('learning-atlas', 3, {
+      // idb는 upgrade가 반환하는 프로미스를 기다려준다 — versionchange 트랜잭션이
+      // 마이그레이션(아래 3) 도중 조기 커밋되지 않도록 async 함수로 선언하고 await 한다.
+      async upgrade(db, oldVersion, _newVersion, tx) {
         if (oldVersion < 1) {
           db.createObjectStore('items', { keyPath: 'id' })
           const interactions = db.createObjectStore('interactions', { keyPath: 'id' })
@@ -35,6 +37,20 @@ function getDB() {
           db.createObjectStore('kcs', { keyPath: 'id' })
           // 기존 items/interactions 레코드는 kcId/confidence가 없는 채로 남는다.
           // 읽는 쪽에서 `?? null`로 처리한다 (v0 데이터와의 호환).
+        }
+        if (oldVersion < 3 && oldVersion > 0) {
+          // v1까지의 Item은 discriminant 없이 { front, back }만 있었다.
+          // v2부터 Item이 판별 유니온이 되면서 type 필드가 필수가 됐으므로,
+          // 기존 레코드를 지우는 대신 flashcard로 마이그레이션해 데이터를 지킨다.
+          const store = tx.objectStore('items')
+          let cursor = await store.openCursor()
+          while (cursor) {
+            const value = cursor.value as unknown as Record<string, unknown>
+            if (!value.type) {
+              await cursor.update({ ...value, type: 'flashcard' } as unknown as Item)
+            }
+            cursor = await cursor.continue()
+          }
         }
       },
     })
@@ -46,8 +62,11 @@ function newId(): string {
   return crypto.randomUUID()
 }
 
-export async function addItem(front: string, back: string, kcId: string | null): Promise<Item> {
-  const item: Item = { id: newId(), front, back, kcId, createdAt: new Date().toISOString() }
+export async function addItem(input: NewItem): Promise<Item> {
+  // NewItem은 이미 유니온으로 분배된 순수 object 타입들의 합인데도 TS가
+  // 제네릭 스프레드를 보수적으로 막는다 — 필드 구성은 NewItem이 보장하므로
+  // 여기서만 object로 캐스트해 스프레드한다.
+  const item = { ...(input as object), id: newId(), createdAt: new Date().toISOString() } as Item
   const db = await getDB()
   await db.add('items', item)
   return item
@@ -75,6 +94,7 @@ export async function recordInteraction(
   itemId: string,
   grade: Grade,
   confidence: Confidence | null,
+  errorTag: ErrorTag | null = null,
 ): Promise<Interaction> {
   const interaction: Interaction = {
     id: newId(),
@@ -82,6 +102,7 @@ export async function recordInteraction(
     ts: new Date().toISOString(),
     grade,
     confidence,
+    errorTag,
   }
   const db = await getDB()
   await db.add('interactions', interaction)

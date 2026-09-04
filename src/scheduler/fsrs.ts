@@ -68,3 +68,21 @@ export function deriveAllCardStates(
 export function isDue(state: CardState, now: Date = new Date()): boolean {
   return state.due.getTime() <= now.getTime()
 }
+
+// Atlas 2부 ERR: "반복 실패 카드 격리(leech)".
+//
+// 처음엔 CardState.lapses(ts-fsrs 내부 카운터)를 그대로 쓰려 했으나, 그 값은
+// "복습 상태에서 다시 잊어버린 횟수"만 세고, 배우는 중(Learning) 계속
+// again을 받는 경우는 전혀 세지 않는다 — 한 번도 review 상태로 넘어가 보지
+// 못한 채 계속 틀리는, 어떤 의미로는 가장 심한 leech가 lapses=0으로
+// 잡힌다(_debug_lapses.ts로 확인). Anki의 leech 판정처럼 "전체 again
+// 횟수"를 직접 세는 편이 의도(계속 틀리는 카드)에 더 가깝다.
+export const LEECH_THRESHOLD = 4
+
+export function againCount(interactions: Interaction[]): number {
+  return interactions.filter((i) => i.grade === 'again').length
+}
+
+export function isLeech(interactions: Interaction[]): boolean {
+  return againCount(interactions) >= LEECH_THRESHOLD
+}
