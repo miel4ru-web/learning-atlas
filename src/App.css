@@ -474,6 +474,35 @@
 .band-badge.band-too-hard,
 .band-badge.band-too-easy { background: transparent; }
 
+/* ---- 데이터 백업 ---- */
+.backup h2 { font-size: 0.95rem; font-weight: 600; margin-bottom: 8px; }
+.backup-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+
+.import-preview {
+  margin-top: 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 16px;
+  display: grid;
+  gap: 10px;
+  font-size: 0.9rem;
+}
+.import-preview strong { font-variant-numeric: tabular-nums; }
+.import-mode { display: grid; gap: 8px; font-size: 0.85rem; }
+.import-mode label { display: flex; gap: 8px; align-items: flex-start; line-height: 1.4; }
+.import-mode input { margin-top: 2px; }
+
+.danger {
+  padding: 12px 24px;
+  border-radius: 8px;
+  border: none;
+  background: var(--again);
+  color: #fff;
+  cursor: pointer;
+  font-size: 1rem;
+}
+.danger:disabled { opacity: 0.5; cursor: not-allowed; }
+
 /* ---- 격리된 카드 ---- */
 .leeches h2 { font-size: 0.95rem; font-weight: 600; margin-bottom: 6px; }
 .leeches ul { list-style: none; margin: 10px 0 0; padding: 0; }

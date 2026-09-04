@@ -36,11 +36,15 @@ interface AtlasDB extends DBSchema {
 
 const SCHEDULER_SETTINGS_KEY = 'scheduler'
 
+// 현재 IndexedDB 스키마 버전. 백업 파일에도 같이 적어(core/backup.ts) 다른
+// 버전에서 만든 파일을 가져오려 할 때 걸러낸다.
+export const DB_VERSION = 4
+
 let dbPromise: Promise<IDBPDatabase<AtlasDB>> | null = null
 
 function getDB() {
   if (!dbPromise) {
-    dbPromise = openDB<AtlasDB>('learning-atlas', 4, {
+    dbPromise = openDB<AtlasDB>('learning-atlas', DB_VERSION, {
       // idb는 upgrade가 반환하는 프로미스를 기다려준다 — versionchange 트랜잭션이
       // 마이그레이션(아래 3) 도중 조기 커밋되지 않도록 async 함수로 선언하고 await 한다.
       async upgrade(db, oldVersion, _newVersion, tx) {
@@ -172,4 +176,62 @@ export async function clearSchedulerSettings(): Promise<void> {
 export async function wipeInteractions(): Promise<void> {
   const db = await getDB()
   await db.clear('interactions')
+}
+
+// ---- 백업(v5): 네 스토어 전체를 그대로 읽고/쓴다 ----
+// 영속화하는 건 이 네 스토어가 전부다(파생 상태는 저장 안 함, types.ts 주석).
+// 그래서 이걸 통째로 내보냈다 다시 넣으면 카드 상태·숙달도·캘리브레이션이
+// 로그 재생으로 똑같이 복원된다 — 위 wipeInteractions 주석의 주장을 사용자가
+// 직접 백업/복원으로 확인할 수 있게 된 것.
+
+export interface DbSnapshot {
+  items: Item[]
+  interactions: Interaction[]
+  kcs: KnowledgeComponent[]
+  schedulerSettings: SchedulerSettings | null
+}
+
+export type ImportMode = 'replace' | 'merge'
+
+export async function exportAll(): Promise<DbSnapshot> {
+  const db = await getDB()
+  const tx = db.transaction(['items', 'interactions', 'kcs', 'settings'], 'readonly')
+  // deleteItem과 같은 방식 — idb 프로미스만 순차 await 한다(그 사이 다른 걸
+  // await 하면 트랜잭션이 조기 종료된다).
+  const items = await tx.objectStore('items').getAll()
+  const interactions = await tx.objectStore('interactions').getAll()
+  const kcs = await tx.objectStore('kcs').getAll()
+  const schedulerSettings = await tx.objectStore('settings').get(SCHEDULER_SETTINGS_KEY)
+  await tx.done
+  return { items, interactions, kcs, schedulerSettings: schedulerSettings ?? null }
+}
+
+/**
+ * merge: id가 겹치면 들어오는 레코드가 이긴다(put). 같은 백업을 두 번 넣어도
+ *        결과가 같다(멱등). schedulerSettings는 파일에 있을 때만 덮어쓴다.
+ * replace: 네 스토어를 먼저 비우고 파일 내용만 남긴다. 파일에 설정이 없으면
+ *          기존 재적합 설정도 사라진다(= FSRS 기본값으로 복귀).
+ */
+export async function importAll(snapshot: DbSnapshot, mode: ImportMode): Promise<void> {
+  const db = await getDB()
+  const tx = db.transaction(['items', 'interactions', 'kcs', 'settings'], 'readwrite')
+  const items = tx.objectStore('items')
+  const interactions = tx.objectStore('interactions')
+  const kcs = tx.objectStore('kcs')
+  const settings = tx.objectStore('settings')
+
+  if (mode === 'replace') {
+    await items.clear()
+    await interactions.clear()
+    await kcs.clear()
+    await settings.clear()
+  }
+
+  for (const it of snapshot.items) await items.put(it)
+  for (const it of snapshot.interactions) await interactions.put(it)
+  for (const kc of snapshot.kcs) await kcs.put(kc)
+  if (snapshot.schedulerSettings) {
+    await settings.put(snapshot.schedulerSettings, SCHEDULER_SETTINGS_KEY)
+  }
+  await tx.done
 }
