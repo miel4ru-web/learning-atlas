@@ -3,8 +3,24 @@
 // 최종적으로 Grade(+틀렸으면 ErrorTag)를 확정해 onGraded로 한 번만 올린다.
 
 import { useState } from 'react'
-import type { CodeItem, ClozeItem, ErrorTag, FlashcardItem, Grade, Item, McqItem } from '../core/types'
-import { checkCloze, checkMcq, clozePrompt, extractBlanks, gradeFromCorrectness } from '../scheduler/grading'
+import type {
+  CodeItem,
+  ClozeItem,
+  ErrorTag,
+  FlashcardItem,
+  Grade,
+  Item,
+  McqItem,
+  ShortAnswerItem,
+} from '../core/types'
+import {
+  checkCloze,
+  checkMcq,
+  checkShortAnswer,
+  clozePrompt,
+  extractBlanks,
+  gradeFromCorrectness,
+} from '../scheduler/grading'
 import { runCode } from '../scheduler/codeRunner'
 import { ErrorTagPicker } from './ErrorTagPicker'
 
@@ -23,6 +39,8 @@ export function RespondPanel({ item, onGraded }: Props) {
       return <ClozeRespond item={item} onGraded={onGraded} />
     case 'code':
       return <CodeRespond item={item} onGraded={onGraded} />
+    case 'short':
+      return <ShortAnswerRespond item={item} onGraded={onGraded} />
   }
 }
 
@@ -155,6 +173,37 @@ function ClozeRespond({ item, onGraded }: { item: ClozeItem; onGraded: Props['on
         <ObjectiveOutcome
           grade={gradeFromCorrectness(checkCloze(item, answers))}
           correctAnswerText={blanks.join(', ')}
+          onGraded={onGraded}
+        />
+      )}
+    </>
+  )
+}
+
+// 단답형(v17): cloze와 채점 방식(정규화 문자열 비교)은 같지만, 문장 속 빈칸이
+// 아니라 완결된 질문 하나에 답 하나를 타이핑한다.
+function ShortAnswerRespond({ item, onGraded }: { item: ShortAnswerItem; onGraded: Props['onGraded'] }) {
+  const [answer, setAnswer] = useState('')
+  const [submitted, setSubmitted] = useState(false)
+
+  return (
+    <>
+      <p className="card-front">{item.prompt}</p>
+      {!submitted ? (
+        <form
+          className="short-answer-form"
+          onSubmit={(e) => {
+            e.preventDefault()
+            setSubmitted(true)
+          }}
+        >
+          <input value={answer} onChange={(e) => setAnswer(e.target.value)} placeholder="답" autoFocus />
+          <button type="submit">제출</button>
+        </form>
+      ) : (
+        <ObjectiveOutcome
+          grade={gradeFromCorrectness(checkShortAnswer(item, answer))}
+          correctAnswerText={item.acceptedAnswers.join(' / ')}
           onGraded={onGraded}
         />
       )}

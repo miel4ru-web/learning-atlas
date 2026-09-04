@@ -43,6 +43,11 @@ export function ItemForm({ kcs, initial, onDone }: Props) {
     initial?.type === 'code' ? JSON.stringify(initial.tests) : DEFAULT_TESTS,
   )
   const [codeTestsError, setCodeTestsError] = useState<string | null>(null)
+  const [shortPrompt, setShortPrompt] = useState(initial?.type === 'short' ? initial.prompt : '')
+  // 쉼표로 여러 정답(동의어) — 저장은 배열이지만 폼에서는 한 줄로 편집하는 게 더 간단하다.
+  const [shortAnswersText, setShortAnswersText] = useState(
+    initial?.type === 'short' ? initial.acceptedAnswers.join(', ') : '',
+  )
   const [kcId, setKcId] = useState(initial?.kcId ?? '')
 
   function buildPayload(): NewItem | null {
@@ -65,16 +70,24 @@ export function ItemForm({ kcs, initial, onDone }: Props) {
         kcId: selectedKc,
       }
     }
-    if (!codePrompt.trim()) return null
-    let tests: CodeTest[]
-    try {
-      tests = JSON.parse(codeTestsJson)
-    } catch {
-      setCodeTestsError('테스트 JSON을 해석할 수 없습니다.')
-      return null
+    if (type === 'code') {
+      if (!codePrompt.trim()) return null
+      let tests: CodeTest[]
+      try {
+        tests = JSON.parse(codeTestsJson)
+      } catch {
+        setCodeTestsError('테스트 JSON을 해석할 수 없습니다.')
+        return null
+      }
+      setCodeTestsError(null)
+      return { type: 'code', prompt: codePrompt.trim(), starterCode: codeStarter, tests, kcId: selectedKc }
     }
-    setCodeTestsError(null)
-    return { type: 'code', prompt: codePrompt.trim(), starterCode: codeStarter, tests, kcId: selectedKc }
+    const acceptedAnswers = shortAnswersText
+      .split(',')
+      .map((a) => a.trim())
+      .filter((a) => a.length > 0)
+    if (!shortPrompt.trim() || acceptedAnswers.length === 0) return null
+    return { type: 'short', prompt: shortPrompt.trim(), acceptedAnswers, kcId: selectedKc }
   }
 
   async function handleSubmit(e: FormEvent) {
@@ -101,7 +114,7 @@ export function ItemForm({ kcs, initial, onDone }: Props) {
         <p className="muted item-edit-type">{TYPE_LABEL[type]}</p>
       ) : (
         <div className="type-tabs">
-          {(['flashcard', 'cloze', 'mcq', 'code'] as ItemType[]).map((t) => (
+          {(Object.keys(TYPE_LABEL) as ItemType[]).map((t) => (
             <button
               key={t}
               className={t === type ? 'active' : ''}
@@ -152,6 +165,20 @@ export function ItemForm({ kcs, initial, onDone }: Props) {
                 />
               </div>
             ))}
+          </>
+        )}
+        {type === 'short' && (
+          <>
+            <input
+              value={shortPrompt}
+              onChange={(e) => setShortPrompt(e.target.value)}
+              placeholder="문제"
+            />
+            <input
+              value={shortAnswersText}
+              onChange={(e) => setShortAnswersText(e.target.value)}
+              placeholder="정답 (동의어는 쉼표로 구분, 예: 물, H2O)"
+            />
           </>
         )}
         {type === 'code' && (

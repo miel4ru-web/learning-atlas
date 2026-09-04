@@ -8,6 +8,7 @@ export const TYPE_LABEL: Record<ItemType, string> = {
   cloze: '빈칸 채우기',
   mcq: '4지선다',
   code: '코드',
+  short: '단답형',
 }
 
 export function itemSummary(item: Item): string {
@@ -19,6 +20,8 @@ export function itemSummary(item: Item): string {
     case 'mcq':
       return item.prompt
     case 'code':
+      return item.prompt
+    case 'short':
       return item.prompt
   }
 }

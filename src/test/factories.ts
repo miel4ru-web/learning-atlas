@@ -9,6 +9,7 @@ import type {
   Interaction,
   KnowledgeComponent,
   McqItem,
+  ShortAnswerItem,
 } from '../core/types'
 
 let seq = 0
@@ -70,6 +71,18 @@ export function code(o: Partial<CodeItem> = {}): CodeItem {
     prompt: 'add',
     starterCode: 'function solve(){}',
     tests: [{ args: [1, 2], expected: 3 }],
+    ...o,
+  }
+}
+
+export function shortAnswer(o: Partial<ShortAnswerItem> = {}): ShortAnswerItem {
+  return {
+    id: nextId('item'),
+    type: 'short',
+    kcId: null,
+    createdAt: iso(0),
+    prompt: 'prompt',
+    acceptedAnswers: ['answer'],
     ...o,
   }
 }

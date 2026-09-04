@@ -539,13 +539,15 @@
 }
 .mcq-options button:hover { border-color: var(--accent); color: var(--accent); }
 
-.cloze-form {
+.cloze-form,
+.short-answer-form {
   display: grid;
   gap: 8px;
   width: 100%;
   justify-items: center;
 }
-.cloze-form input {
+.cloze-form input,
+.short-answer-form input {
   padding: 10px 12px;
   border-radius: 8px;
   border: 1px solid var(--border);
@@ -554,7 +556,8 @@
   font: inherit;
   text-align: center;
 }
-.cloze-form button {
+.cloze-form button,
+.short-answer-form button {
   padding: 10px 20px;
   border-radius: 8px;
   border: none;

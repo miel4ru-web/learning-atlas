@@ -107,6 +107,13 @@ function isItem(v: unknown): v is Item {
         Array.isArray(v.tests) &&
         v.tests.every((t) => isObject(t) && Array.isArray((t as Record<string, unknown>).args))
       )
+    case 'short':
+      return (
+        typeof v.prompt === 'string' &&
+        Array.isArray(v.acceptedAnswers) &&
+        v.acceptedAnswers.length > 0 &&
+        v.acceptedAnswers.every((a) => typeof a === 'string')
+      )
     default:
       return false
   }

@@ -1,13 +1,14 @@
 import { describe, expect, it } from 'vitest'
 import { serializeBackup, parseBackup, BACKUP_FORMAT } from './backup'
 import { DB_VERSION, type DbSnapshot } from './db'
-import { flashcard, mcq, kc, interaction } from '../test/factories'
+import { flashcard, mcq, shortAnswer, kc, interaction } from '../test/factories'
 
 function snapshot(): DbSnapshot {
   const a = flashcard({ kcId: 'kc-1' })
   const b = mcq()
+  const c = shortAnswer()
   return {
-    items: [a, b],
+    items: [a, b, c],
     interactions: [interaction(a.id, 'good', 0), interaction(a.id, 'again', 1, { confidence: 3 })],
     kcs: [kc({ id: 'kc-1', requestRetention: 0.95 })],
     schedulerSettings: null,
@@ -21,7 +22,7 @@ describe('serialize / parse 왕복', () => {
     expect(result.ok).toBe(true)
     if (result.ok) {
       expect(result.snapshot).toEqual(snap)
-      expect(result.summary).toMatchObject({ items: 2, interactions: 2, kcs: 1, hasSettings: false })
+      expect(result.summary).toMatchObject({ items: 3, interactions: 2, kcs: 1, hasSettings: false })
     }
   })
 
@@ -63,6 +64,11 @@ describe('parseBackup 거부 케이스', () => {
   it('형태가 깨진 레코드가 있으면', () => {
     const f = ok()
     f.data.items[0] = { id: 'x', type: 'flashcard' } // front/back 없음
+    expect(parseBackup(JSON.stringify(f))).toMatchObject({ ok: false })
+  })
+  it('단답형인데 acceptedAnswers가 비어 있으면', () => {
+    const f = ok()
+    f.data.items[2].acceptedAnswers = []
     expect(parseBackup(JSON.stringify(f))).toMatchObject({ ok: false })
   })
   it('로그가 존재하지 않는 카드를 가리키면(참조 무결성)', () => {

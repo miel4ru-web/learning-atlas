@@ -3,7 +3,7 @@
 // 판정 결과(정답/오답)를 Grade로 접는 규칙은 하나: 정답→good, 오답→again.
 // hard/easy 뉘앙스는 사람이 자기 채점할 때만 의미가 있어서, 객관식에는 없다.
 
-import type { ClozeItem, McqItem, Grade } from '../core/types'
+import type { ClozeItem, McqItem, ShortAnswerItem, Grade } from '../core/types'
 
 export function gradeFromCorrectness(correct: boolean): Grade {
   return correct ? 'good' : 'again'
@@ -33,4 +33,10 @@ export function checkCloze(item: ClozeItem, answers: string[]): boolean {
   const blanks = extractBlanks(item.text)
   if (blanks.length !== answers.length) return false
   return blanks.every((blank, i) => normalize(blank) === normalize(answers[i] ?? ''))
+}
+
+/** acceptedAnswers 중 하나와만 (정규화 후) 일치해도 정답 — 동의어·다른 표기 허용. */
+export function checkShortAnswer(item: ShortAnswerItem, answer: string): boolean {
+  const given = normalize(answer)
+  return item.acceptedAnswers.some((a) => normalize(a) === given)
 }

@@ -56,6 +56,18 @@ export interface McqItem extends ItemBase {
   correctIndex: 0 | 1 | 2 | 3
 }
 
+/**
+ * 단답형(v17). cloze처럼 자동 채점되지만 문장 속 빈칸이 아니라 완결된 질문에
+ * 직접 타이핑한다 — 회상을 문장 구조 힌트 없이 순수하게 시험한다는 점이 cloze와
+ * 다르다. acceptedAnswers는 동의어·다른 표기(예: "물"/"H2O")를 허용하려고 여럿
+ * 둘 수 있다 — grading.ts의 checkShortAnswer가 그중 하나와만 일치해도 정답 처리.
+ */
+export interface ShortAnswerItem extends ItemBase {
+  type: 'short'
+  prompt: string
+  acceptedAnswers: string[]
+}
+
 export interface CodeTest {
   args: unknown[] // JSON 직렬화 가능한 인자
   expected: unknown
@@ -69,7 +81,7 @@ export interface CodeItem extends ItemBase {
   tests: CodeTest[]
 }
 
-export type Item = FlashcardItem | ClozeItem | McqItem | CodeItem
+export type Item = FlashcardItem | ClozeItem | McqItem | CodeItem | ShortAnswerItem
 export type ItemType = Item['type']
 
 // 일반 Omit<Item,K>는 유니온을 먼저 keyof로 뭉개버려서 flashcard의 front,
