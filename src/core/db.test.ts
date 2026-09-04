@@ -49,6 +49,48 @@ describe('items', () => {
   })
 })
 
+describe('채점 로그 부가 신호(v19)', () => {
+  it('신호를 넘기면 그대로 저장된다', async () => {
+    const item = await db.addItem({ type: 'flashcard', front: 'Q', back: 'A', kcId: null })
+    await db.recordInteraction(item.id, 'good', 3, null, {
+      latencyMs: 4200,
+      response: 'H2O',
+      selectedIndex: 2,
+      policyVersion: '2026-09-05T00:00:00.000Z',
+    })
+
+    const [saved] = await db.getInteractionsForItem(item.id)
+    expect(saved).toMatchObject({
+      grade: 'good',
+      confidence: 3,
+      latencyMs: 4200,
+      response: 'H2O',
+      selectedIndex: 2,
+      policyVersion: '2026-09-05T00:00:00.000Z',
+    })
+  })
+
+  it('신호를 안 넘기면 키 자체가 없다(구버전 로그와 같은 형태)', async () => {
+    const item = await db.addItem({ type: 'flashcard', front: 'Q', back: 'A', kcId: null })
+    await db.recordInteraction(item.id, 'good', null, null)
+
+    const [saved] = await db.getInteractionsForItem(item.id)
+    expect('latencyMs' in saved).toBe(false)
+    expect('response' in saved).toBe(false)
+    expect('selectedIndex' in saved).toBe(false)
+    expect('policyVersion' in saved).toBe(false)
+  })
+
+  it('일부 신호만 있어도 그것만 저장된다', async () => {
+    const item = await db.addItem({ type: 'flashcard', front: 'Q', back: 'A', kcId: null })
+    await db.recordInteraction(item.id, 'again', null, 'concept', { latencyMs: 900 })
+
+    const [saved] = await db.getInteractionsForItem(item.id)
+    expect(saved.latencyMs).toBe(900)
+    expect('response' in saved).toBe(false)
+  })
+})
+
 describe('일괄 작업(v16)', () => {
   it('bulkSetKc: 지정한 카드들의 kcId를 한 번에 바꾼다', async () => {
     const a = await db.addItem({ type: 'flashcard', front: 'a', back: 'a', kcId: null })

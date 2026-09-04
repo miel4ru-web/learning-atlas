@@ -3,7 +3,7 @@
 // 화면의 로컬 상태다 — 채점할 때마다 전역은 reload 되지만 순서는 고정 유지.
 
 import { useState } from 'react'
-import type { Confidence, ErrorTag, Grade, Item } from '../core/types'
+import type { Confidence, ErrorTag, Grade, InteractionSignals, Item } from '../core/types'
 import { useAtlas } from '../core/atlas'
 import { buildSession } from '../scheduler/session'
 import { RespondPanel } from '../activities/RespondPanel'
@@ -66,9 +66,13 @@ export function StudyView() {
   const current = sessionPlan ? sessionPlan[sessionIndex] : undefined
   const currentKc = current?.kcId ? atlas.kcById.get(current.kcId) : undefined
 
-  async function handleGraded(grade: Grade, errorTag: ErrorTag | null) {
+  async function handleGraded(
+    grade: Grade,
+    errorTag: ErrorTag | null,
+    signals: InteractionSignals,
+  ) {
     if (!current) return
-    await atlas.recordInteraction(current.id, grade, confidence, errorTag)
+    await atlas.recordInteraction(current.id, grade, confidence, errorTag, signals)
     setConfidence(null)
     setSessionIndex((i) => i + 1)
   }

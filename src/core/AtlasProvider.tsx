@@ -208,12 +208,17 @@ export function AtlasProvider({ children }: { children: ReactNode }) {
     },
     [reload],
   )
+  // 정책 버전(v19)은 화면이 알 필요가 없다 — 지금 활성인 재적합 설정을 들고 있는
+  // 여기서 붙인다. 재적합을 적용/해제한 시점 전후를 나중에 로그만으로 가를 수 있다(3.6).
   const recordInteraction = useCallback<AtlasData['recordInteraction']>(
-    async (itemId, grade, confidence, errorTag) => {
-      await db.recordInteraction(itemId, grade, confidence, errorTag)
+    async (itemId, grade, confidence, errorTag, signals) => {
+      await db.recordInteraction(itemId, grade, confidence, errorTag, {
+        ...signals,
+        policyVersion: schedulerSettings?.fittedAt ?? 'default',
+      })
       await reload()
     },
-    [reload],
+    [reload, schedulerSettings],
   )
   const applyRefit = useCallback<AtlasData['applyRefit']>(
     async (result) => {

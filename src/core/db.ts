@@ -11,6 +11,7 @@ import type {
   Grade,
   Confidence,
   ErrorTag,
+  InteractionSignals,
   KnowledgeComponent,
   SchedulerSettings,
   StudyPrefs,
@@ -160,11 +161,15 @@ export async function bulkDeleteItems(itemIds: readonly string[]): Promise<void>
   await tx.done
 }
 
+// v19: 부가 신호(응답 시간·응답 원문·선택지 인덱스·정책 버전)를 함께 남긴다.
+// 값이 없는 신호는 키 자체를 넣지 않는다 — JSON 백업에서 undefined는 어차피
+// 사라지므로, 저장 시점부터 "없으면 없는 것"으로 통일해 왕복이 어긋나지 않게 한다.
 export async function recordInteraction(
   itemId: string,
   grade: Grade,
   confidence: Confidence | null,
   errorTag: ErrorTag | null = null,
+  signals: InteractionSignals & { policyVersion?: string } = {},
 ): Promise<Interaction> {
   const interaction: Interaction = {
     id: newId(),
@@ -174,6 +179,11 @@ export async function recordInteraction(
     confidence,
     errorTag,
   }
+  if (signals.latencyMs !== undefined) interaction.latencyMs = signals.latencyMs
+  if (signals.response !== undefined) interaction.response = signals.response
+  if (signals.selectedIndex !== undefined) interaction.selectedIndex = signals.selectedIndex
+  if (signals.policyVersion !== undefined) interaction.policyVersion = signals.policyVersion
+
   const db = await getDB()
   await db.add('interactions', interaction)
   return interaction

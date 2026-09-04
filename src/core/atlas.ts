@@ -15,6 +15,7 @@ import type {
   ErrorTag,
   Grade,
   Interaction,
+  InteractionSignals,
   Item,
   KnowledgeComponent,
   NewItem,
@@ -68,11 +69,13 @@ export interface AtlasData {
   bulkSetKc: (itemIds: readonly string[], kcId: string | null) => Promise<void>
   bulkDeleteItems: (itemIds: readonly string[]) => Promise<void>
   saveStudyPrefs: (prefs: StudyPrefs) => Promise<void>
+  /** signals는 활동 UI가 만들어 주는 부가 신호(v19) — 정책 버전은 여기서 붙인다. */
   recordInteraction: (
     itemId: string,
     grade: Grade,
     confidence: Confidence | null,
     errorTag: ErrorTag | null,
+    signals?: InteractionSignals,
   ) => Promise<void>
   applyRefit: (result: OptimizeResult) => Promise<void>
   resetScheduler: () => Promise<void>

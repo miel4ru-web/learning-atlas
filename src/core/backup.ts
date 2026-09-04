@@ -131,7 +131,13 @@ function isInteraction(v: unknown): v is Interaction {
     (GRADES as string[]).includes(v.grade) &&
     (v.confidence === null || v.confidence === 1 || v.confidence === 2 || v.confidence === 3) &&
     (v.errorTag === null ||
-      (typeof v.errorTag === 'string' && (ERROR_TAGS as string[]).includes(v.errorTag)))
+      (typeof v.errorTag === 'string' && (ERROR_TAGS as string[]).includes(v.errorTag))) &&
+    // v19 부가 신호 — 없으면 통과(구버전 로그), 있으면 형태만 확인한다.
+    (v.latencyMs === undefined || (typeof v.latencyMs === 'number' && v.latencyMs >= 0)) &&
+    (v.response === undefined || typeof v.response === 'string') &&
+    (v.selectedIndex === undefined ||
+      (typeof v.selectedIndex === 'number' && v.selectedIndex >= 0)) &&
+    (v.policyVersion === undefined || typeof v.policyVersion === 'string')
   )
 }
 

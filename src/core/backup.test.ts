@@ -72,6 +72,24 @@ describe('parseBackup 거부 케이스', () => {
     f.data.items[2].acceptedAnswers = []
     expect(parseBackup(JSON.stringify(f))).toMatchObject({ ok: false })
   })
+  it('v19 부가 신호가 붙은 로그도 왕복되고, 형태가 깨졌으면 거부', () => {
+    const f = ok()
+    Object.assign(f.data.interactions[0], {
+      latencyMs: 3100,
+      response: '물',
+      selectedIndex: 1,
+      policyVersion: 'default',
+    })
+    const result = parseBackup(JSON.stringify(f))
+    expect(result).toMatchObject({ ok: true })
+    if (result.ok) {
+      expect(result.snapshot.interactions[0]).toMatchObject({ latencyMs: 3100, response: '물' })
+    }
+
+    const broken = ok()
+    broken.data.interactions[0].latencyMs = '오래'
+    expect(parseBackup(JSON.stringify(broken))).toMatchObject({ ok: false })
+  })
   it('studyPrefs(v18)가 있으면 왕복되고, 형태가 깨졌으면 거부', () => {
     const f = ok()
     f.data.studyPrefs = { dailyReviewCap: 25, vacationMode: false }

@@ -100,6 +100,35 @@ export interface Interaction {
   grade: Grade
   confidence: Confidence | null // 응답 전 자신감. v0 데이터 호환을 위해 null 허용.
   errorTag: ErrorTag | null // again일 때만 값이 있을 수 있다. v1 데이터 호환을 위해 null 허용.
+
+  // ---- v19 부가 신호(Atlas 4.7 스키마의 latency_ms·response·policy_version) ----
+  // 전부 optional이다: v18까지의 로그에는 없고, 앞으로도 활동 타입에 따라 있을 수도
+  // 없을 수도 있다(플래시카드는 입력이 없으니 response가 없다). 읽는 쪽은 항상
+  // "없을 수 있다"를 전제로 다룬다.
+  //
+  // 왜 지금 남기기 시작하는가: 파생 상태는 로그만 있으면 언제든 다시 만들 수 있지만,
+  // 로그에 안 남긴 신호는 소급 복구가 불가능하다. 지금 쓰는 곳이 없어도 쌓아 둬야
+  // 나중에 5부(기능 숙달형 Elo = 정확도 × 소요 시간)·3.4(오답 패턴 분류)·
+  // 3.6(파라미터 교체 전후 비교)이 성립한다.
+
+  /** 문항이 화면에 뜬 뒤 채점까지 걸린 시간(ms). 자신감 입력 단계는 포함하지 않는다. */
+  latencyMs?: number
+  /** 사용자가 실제로 낸 응답 원문. 빈칸은 ' | '로 이어 붙이고, 코드는 제출한 소스 전체. */
+  response?: string
+  /** 4지선다에서 고른 선택지 인덱스(정답이든 오답이든). 3.4 오개념 태깅의 재료. */
+  selectedIndex?: number
+  /** 채점 당시 활성 스케줄러 파라미터 식별자 — 재적합 설정의 fittedAt, 기본값이면 'default'. */
+  policyVersion?: string
+}
+
+/**
+ * 채점 한 건에 딸린 부가 신호(위 Interaction의 v19 필드들 중 활동 UI가 만들어 주는 것).
+ * 활동 타입마다 낼 수 있는 신호가 달라 전부 optional이다.
+ */
+export interface InteractionSignals {
+  latencyMs?: number
+  response?: string
+  selectedIndex?: number
 }
 
 /** Interaction 로그를 재생해 얻는 FSRS 파생 상태. DB에 저장하지 않는다. */
