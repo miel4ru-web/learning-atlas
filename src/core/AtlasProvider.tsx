@@ -37,6 +37,7 @@ export function AtlasProvider({ children }: { children: ReactNode }) {
   const [schedulerSettings, setSchedulerSettings] = useState<db.DbSnapshot['schedulerSettings']>(null)
   const [loading, setLoading] = useState(true)
   const [now, setNow] = useState(() => new Date())
+  const [sessionScopeItemIds, setSessionScopeItemIds] = useState<ReadonlySet<string> | null>(null)
 
   const reload = useCallback(async () => {
     const [allItems, allInteractions, allKcs, settings] = await Promise.all([
@@ -131,6 +132,14 @@ export function AtlasProvider({ children }: { children: ReactNode }) {
   }, [cardStates, now, leechItemIds])
 
   const kcById = useMemo(() => new Map(kcs.map((k) => [k.id, k])), [kcs])
+
+  // 세션 범위는 DB를 안 건드리는 순수 UI 상태라 reload가 필요 없다.
+  const setSessionScope = useCallback<AtlasData['setSessionScope']>((itemIds) => {
+    setSessionScopeItemIds(new Set(itemIds))
+  }, [])
+  const clearSessionScope = useCallback<AtlasData['clearSessionScope']>(() => {
+    setSessionScopeItemIds(null)
+  }, [])
 
   // ---- 액션: DB 변경 후 reload 까지 한 번에 ----
   const addItem = useCallback<AtlasData['addItem']>(
@@ -227,6 +236,9 @@ export function AtlasProvider({ children }: { children: ReactNode }) {
       leechItemIds,
       dueCount,
       kcById,
+      sessionScopeItemIds,
+      setSessionScope,
+      clearSessionScope,
       reload,
       addItem,
       updateItem,
@@ -258,6 +270,9 @@ export function AtlasProvider({ children }: { children: ReactNode }) {
       leechItemIds,
       dueCount,
       kcById,
+      sessionScopeItemIds,
+      setSessionScope,
+      clearSessionScope,
       reload,
       addItem,
       updateItem,

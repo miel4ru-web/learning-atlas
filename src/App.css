@@ -408,6 +408,7 @@
 .deck-filter-chips { display: flex; flex-wrap: wrap; gap: 4px; }
 .deck-filter-reset { padding: 6px 12px; font-size: 0.82rem; }
 .deck-count { font-size: 0.8rem; margin-bottom: 8px; font-variant-numeric: tabular-nums; }
+.deck-study-scoped { margin-left: 8px; padding: 3px 10px; font-size: 0.78rem; }
 
 .deck ul {
   list-style: none;

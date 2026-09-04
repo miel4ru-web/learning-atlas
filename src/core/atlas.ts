@@ -47,6 +47,13 @@ export interface AtlasData {
   dueCount: number
   kcById: ReadonlyMap<string, KnowledgeComponent>
 
+  // ---- 세션 범위(휘발성 UI 상태 — DB에 저장하지 않는다, 새로고침하면 사라짐) ----
+  // "카드" 화면의 덱 필터 결과로 학습 세션을 시작할 때만 쓴다. null이면 평소처럼
+  // 전체 아이템이 세션 후보 풀이다.
+  sessionScopeItemIds: ReadonlySet<string> | null
+  setSessionScope: (itemIds: readonly string[]) => void
+  clearSessionScope: () => void
+
   // ---- 액션(DB를 바꾸고 reload까지 한 번에) ----
   reload: () => Promise<void>
   addItem: (input: NewItem) => Promise<void>

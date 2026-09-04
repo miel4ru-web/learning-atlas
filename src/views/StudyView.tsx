@@ -17,9 +17,15 @@ export function StudyView() {
   const [confidence, setConfidence] = useState<Confidence | null>(null)
   const [budgetInput, setBudgetInput] = useState(String(DEFAULT_BUDGET_MIN))
 
+  // "카드" 화면 덱 필터에서 "이 카드로 학습 시작"을 눌렀으면 sessionScopeItemIds가
+  // 차 있다 — buildSession의 후보 풀을 그 카드들로만 좁힌다. 세션 편성 로직
+  // 자체(만기·신규·선수지식 게이팅 등)는 그대로다: 풀만 미리 걸러서 넘긴다.
+  const scope = atlas.sessionScopeItemIds
+  const scopedPool = scope ? atlas.items.filter((item) => scope.has(item.id)) : atlas.items
+
   function startSession() {
     const minutes = Math.max(1, Number(budgetInput) || DEFAULT_BUDGET_MIN)
-    const plan = buildSession(atlas.items, atlas.cardStates, atlas.eloState, atlas.kcs, atlas.now, {
+    const plan = buildSession(scopedPool, atlas.cardStates, atlas.eloState, atlas.kcs, atlas.now, {
       budgetMinutes: minutes,
       urgentKcIds: atlas.urgentKcIds,
       leechItemIds: atlas.leechItemIds,
@@ -27,6 +33,7 @@ export function StudyView() {
     setSessionPlan(plan)
     setSessionIndex(0)
     setConfidence(null)
+    atlas.clearSessionScope() // 한 번 쓰고 나면 다음 "오늘 학습 시작"은 다시 전체 풀로.
   }
 
   function endSession() {
@@ -49,6 +56,14 @@ export function StudyView() {
     <section className="queue">
       {!sessionPlan ? (
         <div className="session-start">
+          {scope && (
+            <p className="session-scope-note muted">
+              &quot;카드&quot; 필터 결과 {scope.size}장으로 시작합니다.{' '}
+              <button type="button" className="reveal" onClick={() => atlas.clearSessionScope()}>
+                해제
+              </button>
+            </p>
+          )}
           <label>
             오늘 몇 분 학습할까요?
             <input

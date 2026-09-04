@@ -36,8 +36,18 @@ interface Props {
 }
 
 export function Deck({ editingId, onEdit }: Props) {
-  const { items, cardStates, eloState, kcById, kcs, latestByItem, leechItemIds, now, deleteItem } =
-    useAtlas()
+  const {
+    items,
+    cardStates,
+    eloState,
+    kcById,
+    kcs,
+    latestByItem,
+    leechItemIds,
+    now,
+    deleteItem,
+    setSessionScope,
+  } = useAtlas()
   const [filter, setFilter] = useState<DeckFilter>(emptyFilter)
 
   // 필터가 걸어둔 KC가 삭제되면(kcs에서 사라짐) 필터를 조용히 'all'로 되돌린다 —
@@ -65,6 +75,15 @@ export function Deck({ editingId, onEdit }: Props) {
     for (const item of filtered) map.set(item.id, cardRecall(item, cardStates.get(item.id), eloState))
     return map
   }, [filtered, cardStates, eloState])
+
+  // 필터 결과로 세션을 시작 — 범위를 전역(AtlasProvider)에 넘겨두고 "학습" 탭으로
+  // 이동한다. 탭 전환은 useHashRoute의 navigate와 같은 방식(해시 직접 대입)이다:
+  // Deck은 CardsView 아래 깊이 있어 그 navigate 콜백을 프롭으로 꿰지 않고,
+  // views/registry.ts의 'study' id를 그대로 쓴다.
+  function startScopedSession() {
+    setSessionScope(filtered.map((item) => item.id))
+    window.location.hash = 'study'
+  }
 
   function toggleType(t: ItemType) {
     setFilter((f) => {
@@ -147,6 +166,11 @@ export function Deck({ editingId, onEdit }: Props) {
 
       <p className="deck-count muted">
         {filtered.length}개{active && ` / 전체 ${items.length}개`}
+        {active && filtered.length > 0 && (
+          <button type="button" className="reveal deck-study-scoped" onClick={startScopedSession}>
+            이 카드로 학습 시작
+          </button>
+        )}
       </p>
 
       {filtered.length === 0 ? (
