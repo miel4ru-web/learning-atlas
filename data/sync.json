@@ -1,7 +1,7 @@
 {
   "format": "learning-atlas-backup",
   "version": 1,
-  "exportedAt": "2026-09-05T08:39:23.148Z",
+  "exportedAt": "2026-09-05T10:42:51.870Z",
   "dbVersion": 6,
   "data": {
     "items": [
@@ -201,7 +201,66 @@
         "text": "다음 복습 간격은 목표 파지율과 카드의 {{안정성}}에서 역산된다."
       }
     ],
-    "interactions": [],
+    "interactions": [
+      {
+        "id": "026a9827-2e99-4846-93d4-ee982bae2d7e",
+        "itemId": "seed-i3",
+        "ts": "2026-09-05T10:42:43.347Z",
+        "grade": "again",
+        "confidence": 2,
+        "errorTag": "time",
+        "latencyMs": 2282,
+        "response": "",
+        "policyVersion": "default",
+        "sessionId": "6a8cddbe-15d4-4e69-89b6-7171489c5d92"
+      },
+      {
+        "id": "3f55b75f-8c2e-4fa8-926e-d0b8a175463c",
+        "itemId": "seed-i11",
+        "ts": "2026-09-05T10:42:35.579Z",
+        "grade": "good",
+        "confidence": 2,
+        "errorTag": null,
+        "latencyMs": 1463,
+        "policyVersion": "default",
+        "pretest": true,
+        "sessionId": "6a8cddbe-15d4-4e69-89b6-7171489c5d92"
+      },
+      {
+        "id": "5158a7ee-7505-4a99-a1e7-07f2ef7bb6c0",
+        "itemId": "seed-i1",
+        "ts": "2026-09-05T10:42:37.699Z",
+        "grade": "easy",
+        "confidence": 2,
+        "errorTag": null,
+        "latencyMs": 1279,
+        "policyVersion": "default",
+        "sessionId": "6a8cddbe-15d4-4e69-89b6-7171489c5d92"
+      },
+      {
+        "id": "7171f231-e101-40cd-8272-b36d5d7b4d54",
+        "itemId": "seed-i16",
+        "ts": "2026-09-05T10:42:39.635Z",
+        "grade": "easy",
+        "confidence": 2,
+        "errorTag": null,
+        "latencyMs": 1927,
+        "response": "",
+        "policyVersion": "default",
+        "sessionId": "6a8cddbe-15d4-4e69-89b6-7171489c5d92"
+      },
+      {
+        "id": "f47224e3-054f-4110-b8cb-215d042c49d5",
+        "itemId": "seed-i2",
+        "ts": "2026-09-05T10:42:41.059Z",
+        "grade": "good",
+        "confidence": 2,
+        "errorTag": null,
+        "latencyMs": 1408,
+        "policyVersion": "default",
+        "sessionId": "6a8cddbe-15d4-4e69-89b6-7171489c5d92"
+      }
+    ],
     "kcs": [
       {
         "id": "seed-kc-basics",
@@ -228,6 +287,24 @@
     ],
     "schedulerSettings": null,
     "studyPrefs": null,
-    "sessions": []
+    "sessions": [
+      {
+        "startedAt": "2026-09-05T10:42:33.091Z",
+        "budgetMinutes": 20,
+        "policyVersion": "default",
+        "plannedItemIds": [
+          "seed-i11",
+          "seed-i1",
+          "seed-i16",
+          "seed-i2",
+          "seed-i3",
+          "seed-i4",
+          "seed-i5"
+        ],
+        "pretestItemId": "seed-i11",
+        "id": "6a8cddbe-15d4-4e69-89b6-7171489c5d92",
+        "endedAt": null
+      }
+    ]
   }
 }
