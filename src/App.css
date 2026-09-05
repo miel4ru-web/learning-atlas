@@ -443,6 +443,9 @@
 }
 .kc-badge-sm { font-size: 0.7rem; padding: 1px 7px; }
 
+.card-header { display: flex; align-items: center; gap: 12px; width: 100%; }
+.edit-current-card { padding: 4px 12px; font-size: 0.8rem; margin-left: auto; }
+
 .session-progress { font-size: 0.8rem; }
 
 /* ---- 지식 요소 ---- */
@@ -690,6 +693,34 @@
 .misconceptions li:last-child { border-bottom: 0; }
 .misconception-label { font-weight: 500; }
 
+/* ---- 학습자용 지표(v32) ---- */
+.error-tag-distribution ul, .slow-items ul { list-style: none; margin: 10px 0 0; padding: 0; }
+.error-tag-distribution li, .slow-items li {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.9rem;
+}
+.error-tag-distribution li:last-child, .slow-items li:last-child { border-bottom: 0; }
+
+.accuracy-trend-scroll { overflow-x: auto; padding-bottom: 4px; }
+.accuracy-trend {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 10px;
+  align-items: end;
+  gap: 3px;
+  height: 88px;
+  padding-top: 8px;
+  width: max-content;
+}
+.accuracy-trend-col { display: flex; align-items: flex-end; height: 100%; }
+.accuracy-trend-bar { width: 100%; background: var(--accent); border-radius: 3px 3px 0 0; }
+.accuracy-trend-bar.no-data { background: var(--border); }
+
 /* ---- 자기 설명(v24) ---- */
 .free-text-form { display: grid; gap: 10px; width: 100%; }
 .free-text-form textarea {
@@ -782,6 +813,9 @@
 .outcome { display: grid; gap: 12px; justify-items: center; width: 100%; }
 .outcome-correct p { color: var(--good); }
 .outcome-incorrect p { color: var(--again); }
+.outcome-near p { color: var(--hard); }
+.near-miss-buttons { display: flex; gap: 8px; }
+.near-miss-buttons .grade { padding: 10px 20px; }
 
 .error-tag-picker { display: grid; gap: 10px; justify-items: center; }
 .error-tag-buttons { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }

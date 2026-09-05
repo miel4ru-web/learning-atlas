@@ -5,10 +5,19 @@
 import { useMemo, useState } from 'react'
 import type { FSRS } from 'ts-fsrs'
 import type { CardState, EloState, Interaction, Item } from '../core/types'
-import { computeTotals, computeForecast, countMisconceptions } from './stats'
+import {
+  computeTotals,
+  computeForecast,
+  countMisconceptions,
+  countErrorTags,
+  accuracyTrend,
+  slowestItems,
+} from './stats'
 import { simulateAll, logLoss, rmse } from '../scheduler/simulate'
 import { optimizeParameters, type OptimizeResult, type NotEnoughData } from '../scheduler/optimizer'
 import { countBands, DESIRABLE_HIGH, DESIRABLE_LOW } from '../scheduler/selection'
+import { errorTagLabel } from '../activities/ErrorTagPicker'
+import { itemSummary } from '../views/itemDisplay'
 
 interface Props {
   items: Item[]
@@ -70,6 +79,18 @@ export function Dashboard({
   // 오개념 집계(Atlas 3.4) — 태그를 달아둔 4지선다에서만 나온다.
   const misconceptions = useMemo(() => countMisconceptions(items, byItem), [items, byItem])
 
+  // 학습자용 지표 3종(v32) — 전부 기존 로그 위의 순수 집계, 새로 저장하는 건 없다.
+  const errorTags = useMemo(() => countErrorTags(byItem), [byItem])
+  const trend = useMemo(() => accuracyTrend(byItem, now, 30), [byItem, now])
+  const trendReviewed = trend.filter((d) => d.reviews > 0)
+  const trendTotalReviews = trendReviewed.reduce((sum, d) => sum + d.reviews, 0)
+  const trendAverage =
+    trendTotalReviews > 0
+      ? trendReviewed.reduce((sum, d) => sum + d.accuracy * d.reviews, 0) / trendTotalReviews
+      : null
+  const slowItems = useMemo(() => slowestItems(items, byItem), [items, byItem])
+  const itemById = useMemo(() => new Map(items.map((item) => [item.id, item])), [items])
+
   async function runRefit() {
     setRefitting(true)
     setRefitResult(null)
@@ -127,6 +148,80 @@ export function Dashboard({
           ))}
         </div>
       </section>
+
+      <section className="panel">
+        <h2>정답률 추이</h2>
+        <p className="muted">
+          최근 30일, 하루 단위 정답률입니다. 막대가 없는 날은 학습하지 않은 날입니다.
+        </p>
+        {trendReviewed.length > 0 ? (
+          <>
+            <div className="accuracy-trend-scroll">
+              <div className="accuracy-trend">
+                {trend.map((d) => (
+                  <div
+                    className="accuracy-trend-col"
+                    key={d.dateKey}
+                    title={`${d.label} — ${d.reviews > 0 ? `${pct(d.accuracy)} (${d.reviews}회)` : '학습 없음'}`}
+                  >
+                    <div
+                      className={`accuracy-trend-bar${d.reviews === 0 ? ' no-data' : ''}`}
+                      style={{ height: d.reviews > 0 ? `${Math.max(4, d.accuracy * 72)}px` : '4px' }}
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+            <p className="muted">
+              평균 {pct(trendAverage ?? 0)} ({trendTotalReviews}회)
+            </p>
+          </>
+        ) : (
+          <p className="muted">최근 30일 안에 학습 기록이 없습니다.</p>
+        )}
+      </section>
+
+      {errorTags.length > 0 && (
+        <section className="panel error-tag-distribution">
+          <h2>오답 원인 분포</h2>
+          <p className="muted">
+            &quot;다시&quot;로 채점하며 고른 사유를 모은 것입니다. 부주의가 많다면 속도를
+            늦추는 쪽이, 개념 결손이 많다면 그 지식 요소를 다시 학습하는 쪽이 우선입니다.
+          </p>
+          <ul>
+            {errorTags.map((e) => (
+              <li key={e.tag}>
+                <span className="misconception-label">{errorTagLabel(e.tag)}</span>
+                <span className="muted">{e.count}회</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {slowItems.length > 0 && (
+        <section className="panel slow-items">
+          <h2>느린 카드</h2>
+          <p className="muted">
+            맞히긴 하지만 응답까지 오래 걸리는 카드입니다(응답시간 중앙값 기준, 3회 이상
+            응답한 카드만). 절차가 아직 자동화되지 않았다는 신호일 수 있습니다.
+          </p>
+          <ul>
+            {slowItems.map((r) => {
+              const item = itemById.get(r.itemId)
+              if (!item) return null
+              return (
+                <li key={r.itemId}>
+                  <span className="misconception-label">{itemSummary(item)}</span>
+                  <span className="muted">
+                    {(r.medianLatencyMs / 1000).toFixed(1)}초 · {r.reviews}회
+                  </span>
+                </li>
+              )
+            })}
+          </ul>
+        </section>
+      )}
 
       {misconceptions.length > 0 && (
         <section className="panel misconceptions">

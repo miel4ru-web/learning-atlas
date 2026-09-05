@@ -7,6 +7,7 @@
 // 자기가 아는 만큼만 채운다. 자신감 입력 단계는 문제 내용이 아직 안 보이므로 시간에서 뺀다.
 
 import { useEffect, useRef, useState } from 'react'
+import { useKeyBinding } from '../shell/useKeyBinding'
 import type {
   CodeItem,
   ClozeItem,
@@ -26,9 +27,11 @@ import {
   clozePrompt,
   extractBlanks,
   gradeFromCorrectness,
+  type MatchResult,
 } from '../scheduler/grading'
 import { runCode } from '../scheduler/codeRunner'
 import { ErrorTagPicker } from './ErrorTagPicker'
+import { shuffledIndices } from './shuffle'
 
 interface Props {
   item: Item
@@ -79,21 +82,32 @@ export function RespondPanel({ item, onGraded }: Props) {
 function SelfGrade({ onGraded }: { onGraded: (grade: Grade, errorTag: ErrorTag | null) => void }) {
   const [awaitingTag, setAwaitingTag] = useState(false)
 
+  useKeyBinding(
+    awaitingTag
+      ? {}
+      : {
+          '1': () => setAwaitingTag(true),
+          '2': () => onGraded('hard', null),
+          '3': () => onGraded('good', null),
+          '4': () => onGraded('easy', null),
+        },
+  )
+
   if (awaitingTag) return <ErrorTagPicker onPick={(tag) => onGraded('again', tag)} />
 
   return (
     <div className="grades">
       <button className="grade grade-again" onClick={() => setAwaitingTag(true)}>
-        다시
+        다시 (1)
       </button>
       <button className="grade grade-hard" onClick={() => onGraded('hard', null)}>
-        어려움
+        어려움 (2)
       </button>
       <button className="grade grade-good" onClick={() => onGraded('good', null)}>
-        좋음
+        좋음 (3)
       </button>
       <button className="grade grade-easy" onClick={() => onGraded('easy', null)}>
-        쉬움
+        쉬움 (4)
       </button>
     </div>
   )
@@ -104,12 +118,14 @@ function SelfGrade({ onGraded }: { onGraded: (grade: Grade, errorTag: ErrorTag |
 function FlashcardRespond({ item, onGraded }: { item: FlashcardItem; onGraded: Graded }) {
   const [revealed, setRevealed] = useState(false)
 
+  useKeyBinding(revealed ? {} : { ' ': () => setRevealed(true) })
+
   return (
     <>
       <p className="card-front">{item.front}</p>
       {!revealed ? (
         <button className="reveal" onClick={() => setRevealed(true)}>
-          답 보기
+          답 보기 (Space)
         </button>
       ) : (
         <>
@@ -195,12 +211,16 @@ function ObjectiveOutcome({
   /** 각 활동이 자기 신호(응답 원문 등)를 미리 감아서 넘겨준다. */
   onGraded: (grade: Grade, errorTag: ErrorTag | null) => void
 }) {
+  useKeyBinding(
+    grade !== 'again' ? { ' ': () => onGraded(grade, null), Enter: () => onGraded(grade, null) } : {},
+  )
+
   if (grade !== 'again') {
     return (
       <div className="outcome outcome-correct">
         <p>정답입니다.</p>
         <button className="reveal" onClick={() => onGraded(grade, null)}>
-          다음
+          다음 (Space)
         </button>
       </div>
     )
@@ -214,17 +234,54 @@ function ObjectiveOutcome({
   )
 }
 
+// 오타 허용(v32) — 편집거리 1짜리 "거의 맞음"은 자동으로 정답 처리하지 않고
+// 사용자가 직접 고르게 한다. cloze·단답형이 공유한다.
+function NearMissBanner({
+  correctAnswerText,
+  givenText,
+  onResolve,
+}: {
+  correctAnswerText: string
+  givenText: string
+  onResolve: (grade: Grade) => void
+}) {
+  useKeyBinding({ '1': () => onResolve('good'), '2': () => onResolve('again') })
+  return (
+    <div className="outcome outcome-near">
+      <p>
+        거의 맞았습니다. 정답: <strong>{correctAnswerText}</strong> (입력: {givenText || '(빈칸)'})
+      </p>
+      <div className="near-miss-buttons">
+        <button className="grade grade-good" onClick={() => onResolve('good')}>
+          정답으로 (1)
+        </button>
+        <button className="grade grade-again" onClick={() => onResolve('again')}>
+          오답으로 (2)
+        </button>
+      </div>
+    </div>
+  )
+}
+
+/** near면 아직 결론이 안 났다는 뜻으로 null, 그 외엔 바로 Grade가 정해진다. */
+function gradeFromMatch(result: MatchResult): Grade | null {
+  if (result === 'near') return null
+  return gradeFromCorrectness(result === 'correct')
+}
+
 function McqRespond({ item, onGraded }: { item: McqItem; onGraded: Graded }) {
   const [selected, setSelected] = useState<number | null>(null)
+  // 표시 순서만 섞는다(v32) — selected·채점·오개념 태깅은 전부 원본 인덱스를 쓴다.
+  const [order] = useState(() => shuffledIndices(item.options.length))
 
   return (
     <>
       <p className="card-front">{item.prompt}</p>
       {selected === null ? (
         <div className="mcq-options">
-          {item.options.map((opt, i) => (
-            <button key={i} onClick={() => setSelected(i)}>
-              {opt}
+          {order.map((originalIndex) => (
+            <button key={originalIndex} onClick={() => setSelected(originalIndex)}>
+              {item.options[originalIndex]}
             </button>
           ))}
         </div>
@@ -248,6 +305,11 @@ function ClozeRespond({ item, onGraded }: { item: ClozeItem; onGraded: Props['on
   const blanks = extractBlanks(item.text)
   const [answers, setAnswers] = useState<string[]>(() => blanks.map(() => ''))
   const [submitted, setSubmitted] = useState(false)
+  const [resolvedGrade, setResolvedGrade] = useState<Grade | null>(null)
+
+  const result = submitted ? checkCloze(item, answers) : null
+  // 빈칸이 여럿이면 ' | '로 이어 붙인다(정답 표기 blanks.join(', ')와 구분되게).
+  const responseText = answers.join(' | ')
 
   return (
     <>
@@ -272,12 +334,17 @@ function ClozeRespond({ item, onGraded }: { item: ClozeItem; onGraded: Props['on
           ))}
           <button type="submit">제출</button>
         </form>
+      ) : result && resolvedGrade === null && gradeFromMatch(result) === null ? (
+        <NearMissBanner
+          correctAnswerText={blanks.join(', ')}
+          givenText={responseText}
+          onResolve={setResolvedGrade}
+        />
       ) : (
         <ObjectiveOutcome
-          grade={gradeFromCorrectness(checkCloze(item, answers))}
+          grade={resolvedGrade ?? gradeFromMatch(result ?? 'wrong') ?? 'again'}
           correctAnswerText={blanks.join(', ')}
-          // 빈칸이 여럿이면 ' | '로 이어 붙인다(정답 표기 blanks.join(', ')와 구분되게).
-          onGraded={(grade, tag) => onGraded(grade, tag, { response: answers.join(' | ') })}
+          onGraded={(grade, tag) => onGraded(grade, tag, { response: responseText })}
         />
       )}
     </>
@@ -289,6 +356,9 @@ function ClozeRespond({ item, onGraded }: { item: ClozeItem; onGraded: Props['on
 function ShortAnswerRespond({ item, onGraded }: { item: ShortAnswerItem; onGraded: Graded }) {
   const [answer, setAnswer] = useState('')
   const [submitted, setSubmitted] = useState(false)
+  const [resolvedGrade, setResolvedGrade] = useState<Grade | null>(null)
+
+  const result = submitted ? checkShortAnswer(item, answer) : null
 
   return (
     <>
@@ -304,9 +374,15 @@ function ShortAnswerRespond({ item, onGraded }: { item: ShortAnswerItem; onGrade
           <input value={answer} onChange={(e) => setAnswer(e.target.value)} placeholder="답" autoFocus />
           <button type="submit">제출</button>
         </form>
+      ) : result && resolvedGrade === null && gradeFromMatch(result) === null ? (
+        <NearMissBanner
+          correctAnswerText={item.acceptedAnswers.join(' / ')}
+          givenText={answer}
+          onResolve={setResolvedGrade}
+        />
       ) : (
         <ObjectiveOutcome
-          grade={gradeFromCorrectness(checkShortAnswer(item, answer))}
+          grade={resolvedGrade ?? gradeFromMatch(result ?? 'wrong') ?? 'again'}
           correctAnswerText={item.acceptedAnswers.join(' / ')}
           onGraded={(grade, tag) => onGraded(grade, tag, { response: answer })}
         />

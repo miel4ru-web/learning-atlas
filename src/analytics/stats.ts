@@ -1,7 +1,7 @@
 // Atlas 2부 ANL — 학습 로그를 모아 상태를 보여주고 예측한다. 전부 Interaction
 // 로그 위의 순수 집계다(저장하지 않는다, 다른 파생 상태들과 동일한 원칙).
 
-import type { CardState, Interaction, Item } from '../core/types'
+import type { CardState, ErrorTag, Interaction, Item } from '../core/types'
 
 // ---- 저품질 문항 신고(Atlas 4.6 콘텐츠 파이프라인) ----
 // 문서: "사용 후 b 보정(Elo) · 저품질 문항 자동 신고(정답률 < .2 또는 > .98)".
@@ -166,4 +166,112 @@ export function computeForecast(
     label: key === todayKey ? '오늘' : i === 1 ? '내일' : `${i}일 후`,
     count: buckets.get(key) ?? 0,
   }))
+}
+
+// ---- 오답 원인 분포(v32, Atlas 2부 ERR) ----
+// errorTag는 지금까지 session.ts의 긴급 KC 판정과 Deck.tsx 뱃지에만 쓰이고
+// 집계가 없었다. "부주의가 절반"과 "개념 오류가 절반"은 처방이 완전히 다르므로
+// 학습자에게 가장 실행 가능한 지표다.
+
+export interface ErrorTagCount {
+  tag: ErrorTag
+  count: number
+}
+
+/** again으로 채점되고 사유를 골랐던 것만 센다(건너뛰면 errorTag가 null). */
+export function countErrorTags(byItem: ReadonlyMap<string, Interaction[]>): ErrorTagCount[] {
+  const counts = new Map<ErrorTag, number>()
+  for (const log of byItem.values()) {
+    for (const interaction of log) {
+      if (interaction.errorTag == null) continue
+      counts.set(interaction.errorTag, (counts.get(interaction.errorTag) ?? 0) + 1)
+    }
+  }
+  return [...counts.entries()]
+    .map(([tag, count]) => ({ tag, count }))
+    .sort((a, b) => b.count - a.count)
+}
+
+// ---- 정답률 추이(v32) ----
+
+export interface AccuracyTrendDay {
+  dateKey: string
+  label: string
+  reviews: number
+  /** reviews가 0이면 표시할 값이 없다는 뜻으로 0을 둔다 — 호출부가 reviews로 걸러야 한다. */
+  accuracy: number
+}
+
+/** 최근 days일(오늘 포함) 동안의 일별 리뷰 수·정답률. */
+export function accuracyTrend(
+  byItem: ReadonlyMap<string, Interaction[]>,
+  now: Date,
+  days = 30,
+): AccuracyTrendDay[] {
+  const buckets = new Map<string, { correct: number; total: number }>()
+  const order: string[] = []
+  const cursor = new Date(now.getFullYear(), now.getMonth(), now.getDate() - (days - 1))
+  for (let i = 0; i < days; i++) {
+    const key = localDateKey(cursor)
+    order.push(key)
+    buckets.set(key, { correct: 0, total: 0 })
+    cursor.setDate(cursor.getDate() + 1)
+  }
+
+  for (const log of byItem.values()) {
+    for (const interaction of log) {
+      const bucket = buckets.get(localDateKey(new Date(interaction.ts)))
+      if (!bucket) continue // 창 밖(더 오래된) 로그는 건너뛴다
+      bucket.total += 1
+      if (interaction.grade !== 'again') bucket.correct += 1
+    }
+  }
+
+  const todayKey = localDateKey(now)
+  return order.map((key) => {
+    const bucket = buckets.get(key)!
+    return {
+      dateKey: key,
+      label: key === todayKey ? '오늘' : key.slice(5), // MM-DD
+      reviews: bucket.total,
+      accuracy: bucket.total > 0 ? bucket.correct / bucket.total : 0,
+    }
+  })
+}
+
+// ---- 느린 카드(v32) — latencyMs의 첫 소비자 ----
+// latencyMs는 v19부터 기록됐지만 여태 읽는 코드가 없었다. "맞히긴 하는데 오래
+// 걸린다"는 절차적 지식이 아직 자동화되지 않았다는 신호다(정확도 × 속도의 첫걸음).
+
+export interface SlowItemReport {
+  itemId: string
+  medianLatencyMs: number
+  reviews: number
+}
+
+const MIN_LATENCY_SAMPLES = 3
+
+/** 정답 채점 중 응답시간 중앙값이 큰 카드 순. latencyMs 없는 로그(v18 이전 등)는 제외. */
+export function slowestItems(
+  items: Item[],
+  byItem: ReadonlyMap<string, Interaction[]>,
+  limit = 10,
+): SlowItemReport[] {
+  const reports: SlowItemReport[] = []
+
+  for (const item of items) {
+    const log = byItem.get(item.id) ?? []
+    const latencies = log
+      .filter((i): i is Interaction & { latencyMs: number } => i.grade !== 'again' && i.latencyMs !== undefined)
+      .map((i) => i.latencyMs)
+      .sort((a, b) => a - b)
+    if (latencies.length < MIN_LATENCY_SAMPLES) continue
+
+    const mid = Math.floor(latencies.length / 2)
+    const medianLatencyMs =
+      latencies.length % 2 === 0 ? (latencies[mid - 1] + latencies[mid]) / 2 : latencies[mid]
+    reports.push({ itemId: item.id, medianLatencyMs, reviews: latencies.length })
+  }
+
+  return reports.sort((a, b) => b.medianLatencyMs - a.medianLatencyMs).slice(0, limit)
 }

@@ -53,7 +53,9 @@ export function ItemForm({ kcs, initial, onDone }: Props) {
   const [codeTestsJson, setCodeTestsJson] = useState(
     initial?.type === 'code' ? JSON.stringify(initial.tests) : DEFAULT_TESTS,
   )
-  const [codeTestsError, setCodeTestsError] = useState<string | null>(null)
+  // 저장 실패 사유 — buildPayload()가 필드별 구체적인 메시지를 돌려주면 여기 보여준다.
+  // 예전에는 buildPayload가 null만 반환해 "추가 버튼이 안 먹는" 것처럼 보였다.
+  const [formError, setFormError] = useState<string | null>(null)
   const [shortPrompt, setShortPrompt] = useState(initial?.type === 'short' ? initial.prompt : '')
   // 쉼표로 여러 정답(동의어) — 저장은 배열이지만 폼에서는 한 줄로 편집하는 게 더 간단하다.
   const [shortAnswersText, setShortAnswersText] = useState(
@@ -71,68 +73,88 @@ export function ItemForm({ kcs, initial, onDone }: Props) {
   )
   const [kcId, setKcId] = useState(initial?.kcId ?? '')
 
-  function buildPayload(): NewItem | null {
+  /** 저장 가능하면 아이템을, 아니면 화면에 보여줄 구체적인 사유를 돌려준다. */
+  function buildPayload(): { ok: true; item: NewItem } | { ok: false; message: string } {
     const selectedKc = kcId || null
     if (type === 'flashcard') {
-      if (!front.trim() || !back.trim()) return null
-      return { type: 'flashcard', front: front.trim(), back: back.trim(), kcId: selectedKc }
+      if (!front.trim()) return { ok: false, message: '앞면을 입력하세요.' }
+      if (!back.trim()) return { ok: false, message: '뒷면을 입력하세요.' }
+      return { ok: true, item: { type: 'flashcard', front: front.trim(), back: back.trim(), kcId: selectedKc } }
     }
     if (type === 'cloze') {
-      if (!clozeText.includes('{{')) return null
-      return { type: 'cloze', text: clozeText.trim(), kcId: selectedKc }
+      if (!clozeText.trim()) return { ok: false, message: '문제 내용을 입력하세요.' }
+      if (!clozeText.includes('{{')) {
+        return { ok: false, message: '빈칸 카드에는 {{정답}} 형식의 빈칸이 하나는 있어야 합니다.' }
+      }
+      return { ok: true, item: { type: 'cloze', text: clozeText.trim(), kcId: selectedKc } }
     }
     if (type === 'mcq') {
-      if (!mcqPrompt.trim() || mcqOptions.some((o) => !o.trim())) return null
+      if (!mcqPrompt.trim()) return { ok: false, message: '문제를 입력하세요.' }
+      if (mcqOptions.some((o) => !o.trim())) return { ok: false, message: '보기 4개를 모두 채우세요.' }
       // 정답 자리는 비워서 저장한다 — 정답을 고른 건 오개념이 아니다.
       const distractorTags = mcqTags.map((t, i) => (i === mcqCorrect ? null : t.trim() || null))
       return {
-        type: 'mcq',
-        prompt: mcqPrompt.trim(),
-        options: mcqOptions as [string, string, string, string],
-        correctIndex: mcqCorrect as 0 | 1 | 2 | 3,
-        ...(distractorTags.some((t) => t !== null) ? { distractorTags } : {}),
-        kcId: selectedKc,
+        ok: true,
+        item: {
+          type: 'mcq',
+          prompt: mcqPrompt.trim(),
+          options: mcqOptions as [string, string, string, string],
+          correctIndex: mcqCorrect as 0 | 1 | 2 | 3,
+          ...(distractorTags.some((t) => t !== null) ? { distractorTags } : {}),
+          kcId: selectedKc,
+        },
       }
     }
     if (type === 'code') {
-      if (!codePrompt.trim()) return null
+      if (!codePrompt.trim()) return { ok: false, message: '문제를 입력하세요.' }
       let tests: CodeTest[]
       try {
         tests = JSON.parse(codeTestsJson)
       } catch {
-        setCodeTestsError('테스트 JSON을 해석할 수 없습니다.')
-        return null
+        return { ok: false, message: '테스트 JSON을 해석할 수 없습니다.' }
       }
-      setCodeTestsError(null)
-      return { type: 'code', prompt: codePrompt.trim(), starterCode: codeStarter, tests, kcId: selectedKc }
+      return {
+        ok: true,
+        item: { type: 'code', prompt: codePrompt.trim(), starterCode: codeStarter, tests, kcId: selectedKc },
+      }
     }
     if (type === 'short') {
       const acceptedAnswers = shortAnswersText
         .split(',')
         .map((a) => a.trim())
         .filter((a) => a.length > 0)
-      if (!shortPrompt.trim() || acceptedAnswers.length === 0) return null
-      return { type: 'short', prompt: shortPrompt.trim(), acceptedAnswers, kcId: selectedKc }
+      if (!shortPrompt.trim()) return { ok: false, message: '문제를 입력하세요.' }
+      if (acceptedAnswers.length === 0) return { ok: false, message: '정답을 하나 이상 입력하세요.' }
+      return { ok: true, item: { type: 'short', prompt: shortPrompt.trim(), acceptedAnswers, kcId: selectedKc } }
     }
-    if (!explainPrompt.trim() || !explainModelAnswer.trim()) return null
+    if (!explainPrompt.trim()) return { ok: false, message: '질문을 입력하세요.' }
+    if (!explainModelAnswer.trim()) return { ok: false, message: '모범 답안을 입력하세요.' }
     const keyPoints = explainKeyPointsText
       .split('\n')
       .map((p) => p.trim())
       .filter((p) => p.length > 0)
     return {
-      type: 'free_text',
-      prompt: explainPrompt.trim(),
-      modelAnswer: explainModelAnswer.trim(),
-      // 없으면 필드 자체를 안 넣는다 — optional 필드의 형태를 저장·백업 양쪽에서 통일.
-      ...(keyPoints.length > 0 ? { keyPoints } : {}),
-      kcId: selectedKc,
+      ok: true,
+      item: {
+        type: 'free_text',
+        prompt: explainPrompt.trim(),
+        modelAnswer: explainModelAnswer.trim(),
+        // 없으면 필드 자체를 안 넣는다 — optional 필드의 형태를 저장·백업 양쪽에서 통일.
+        ...(keyPoints.length > 0 ? { keyPoints } : {}),
+        kcId: selectedKc,
+      },
     }
   }
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
-    const payload = buildPayload()
-    if (!payload) return
+    const result = buildPayload()
+    if (!result.ok) {
+      setFormError(result.message)
+      return
+    }
+    setFormError(null)
+    const payload = result.item
     if (initial) {
       await atlas.updateItem({
         ...(payload as object),
@@ -273,7 +295,6 @@ export function ItemForm({ kcs, initial, onDone }: Props) {
               placeholder='[{"args": [2, 3], "expected": 5}]'
               className="code-textarea"
             />
-            {codeTestsError && <p className="error-text">{codeTestsError}</p>}
           </>
         )}
 
@@ -285,6 +306,8 @@ export function ItemForm({ kcs, initial, onDone }: Props) {
             </option>
           ))}
         </select>
+
+        {formError && <p className="error-text">{formError}</p>}
 
         <div className="form-actions">
           <button type="submit">{editing ? '저장' : '추가'}</button>

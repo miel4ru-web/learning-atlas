@@ -2,7 +2,7 @@
 // 순서를 고정하고(sessionPlan), 카드를 한 장씩 넘긴다. 세션 진행 상태는 이
 // 화면의 로컬 상태다 — 채점할 때마다 전역은 reload 되지만 순서는 고정 유지.
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import type {
   Confidence,
   ErrorTag,
@@ -12,23 +12,37 @@ import type {
   StudySession,
 } from '../core/types'
 import { useAtlas } from '../core/atlas'
+import { useKeyBinding } from '../shell/useKeyBinding'
 import { openSession, resumeIndex } from '../core/sessions'
 import { buildSession, pickPretestItem } from '../scheduler/session'
 import { seedDeck, SEED_DECK_SIZE } from '../core/seedDeck'
 import { RespondPanel } from '../activities/RespondPanel'
+import { ItemForm } from './ItemForm'
 
 const DEFAULT_BUDGET_MIN = 20
 const CONFIDENCE_LABEL: Record<Confidence, string> = { 1: '모르겠다', 2: '애매하다', 3: '확실하다' }
+
+// 새 지식요소라도 평균 이만큼의 카드마다 한 번만 실제로 묻는다(v33) — "KC당 평생 1회"
+// 만으로는 새 지식요소가 몰린 세션(예: 콜드스타트, 큰 CSV 임포트 직후)에서 여전히
+// 질문이 쏟아진다. 샘플링에서 빠진 카드는 그 KC를 "물어본 적 있음"으로 표시하지
+// 않는다 — 나중에 같은 KC의 다른 카드가 다시 후보가 되면 또 기회가 있다.
+const CONFIDENCE_SAMPLE_EVERY = 3
+
+/** id에서 결정적으로(같은 id면 항상 같은 결과) 대략 1/everyN 확률의 표본만 통과시킨다. */
+function stableSampleIn(id: string, everyN: number): boolean {
+  let hash = 0
+  for (let i = 0; i < id.length; i++) hash = (hash * 31 + id.charCodeAt(i)) >>> 0
+  return hash % everyN === 0
+}
 
 export function StudyView() {
   const atlas = useAtlas()
   const [sessionPlan, setSessionPlan] = useState<Item[] | null>(null)
   const [sessionIndex, setSessionIndex] = useState(0)
-  // KC가 없는 카드(그룹핑 대상 아님)용 — 매번 새로 묻는다.
+  // KC가 없는 카드(그룹핑 대상 아님)용 — 신규 후보로서 아래 샘플링을 그대로 통과해야 묻는다.
   const [confidence, setConfidence] = useState<Confidence | null>(null)
-  // 세션 전체에서 KC별로 이미 고른 자신감 값. 인터리빙 제약(동일 KC 연속 최대 2장) 탓에
-  // KC가 자주 바뀌어도, 같은 KC가 세션 중 다시 나오면(인접이 아니어도) 다시 묻지 않는다 —
-  // "세션당 KC 1회"로 자기평가 질문 빈도를 낮춘다.
+  // 이번 세션에서 KC별로 이미 고른 자신감 값(세션이 끝나면 사라진다 — 평생 이력은
+  // historicallyAskedKcIds가 따로 맡는다).
   const [kcConfidence, setKcConfidence] = useState<Map<string, Confidence>>(new Map())
   // groupStartIndex는 "자신감을 마지막으로 새로 고른 sessionIndex" — 화면에는 이 값보다
   // 뒤에 있을 때만(=지금 막 고른 게 아닐 때만) "다시 묻지 않습니다" 안내를 보여준다.
@@ -37,6 +51,9 @@ export function StudyView() {
   const [seeding, setSeeding] = useState(false)
   const [pretestItemId, setPretestItemId] = useState<string | null>(null)
   const [sessionId, setSessionId] = useState<string | null>(null)
+  // 세션 중 카드 편집(v32) — 세션 순서는 시작 시점에 고정되지만, 내용은 그때그때
+  // 최신으로 보여줘야 편집한 게 바로 반영된다. 아래 itemById가 그 재해석을 담당한다.
+  const [editingCard, setEditingCard] = useState(false)
 
   // 새로고침·탭 이동으로 끊긴 세션(v27). 화면에 세션이 안 떠 있을 때만 물어본다.
   const resumable = sessionPlan === null ? openSession(atlas.sessions) : null
@@ -136,6 +153,7 @@ export function StudyView() {
     setConfidence(null)
     setKcConfidence(new Map())
     setGroupStartIndex(0)
+    setEditingCard(false)
     atlas.clearSessionScope() // 한 번 쓰고 나면 다음 "오늘 학습 시작"은 다시 전체 풀로.
   }
 
@@ -158,6 +176,7 @@ export function StudyView() {
     setConfidence(null)
     setKcConfidence(new Map())
     setGroupStartIndex(resumeAt)
+    setEditingCard(false)
   }
 
   async function endSession() {
@@ -166,12 +185,40 @@ export function StudyView() {
     setSessionPlan(null)
     setSessionIndex(0)
     setConfidence(null)
+    setEditingCard(false)
   }
 
-  const current = sessionPlan ? sessionPlan[sessionIndex] : undefined
+  // sessionPlan은 세션 시작 시점의 스냅샷이라 세션 중 카드를 편집해도 거기엔
+  // 반영되지 않는다 — id로 atlas.items를 다시 찾아 항상 최신 내용을 보여준다.
+  const itemById = useMemo(() => new Map(atlas.items.map((item) => [item.id, item])), [atlas.items])
+  const plannedItem = sessionPlan ? sessionPlan[sessionIndex] : undefined
+  const current = plannedItem ? (itemById.get(plannedItem.id) ?? plannedItem) : undefined
   const currentKc = current?.kcId ? atlas.kcById.get(current.kcId) : undefined
-  // KC가 있는 카드는 세션 캐시(kcConfidence)에서, 없는 카드는 로컬 confidence에서 가져온다.
-  const effectiveConfidence: Confidence | null =
+
+  // v33 — 세션당 1회로는 지식요소가 다양한 세션에서 여전히 자주 묻게 되어, "KC당
+  // 평생 1회"로 넓힌다: 전체 채점 로그를 훑어 자신감을 한 번이라도 받은 적 있는 KC는
+  // 세션이 바뀌어도 다시 묻지 않는다. 아이템이 지워졌으면 그 로그의 KC는 알 수 없어
+  // 건너뛴다(다른 파생 상태의 기존 관례와 같다).
+  const historicallyAskedKcIds = useMemo(() => {
+    const ids = new Set<string>()
+    for (const i of atlas.interactions) {
+      if (i.confidence == null) continue
+      const kcId = itemById.get(i.itemId)?.kcId
+      if (kcId) ids.add(kcId)
+    }
+    return ids
+  }, [atlas.interactions, itemById])
+
+  const kcAlreadyKnown =
+    current?.kcId != null && (kcConfidence.has(current.kcId) || historicallyAskedKcIds.has(current.kcId))
+  // "물어볼 만한 후보"인가 — KC가 없거나(그룹 없음), 있다면 이번 세션·과거 전체
+  // 어디서도 아직 안 물어봤을 때. 후보라도 CONFIDENCE_SAMPLE_EVERY 표본만 실제로 묻는다.
+  const isConfidenceCandidate = current != null && !kcAlreadyKnown
+  const shouldPromptConfidence =
+    isConfidenceCandidate && stableSampleIn(current!.id, CONFIDENCE_SAMPLE_EVERY)
+  // 실제로 기록할 값 — 이번 세션에 이미 답했다면 그 값, 아니면(과거에 답했거나 이번엔
+  // 샘플링에서 빠졌다면) null. 오래된 값을 지금 것처럼 재사용해 캘리브레이션을 왜곡하지 않는다.
+  const confidenceToRecord: Confidence | null =
     current?.kcId != null ? kcConfidence.get(current.kcId) ?? null : confidence
 
   function pickConfidence(value: Confidence) {
@@ -183,13 +230,21 @@ export function StudyView() {
     setGroupStartIndex(sessionIndex)
   }
 
+  // 자신감 프롬프트가 떠 있을 때만 1~3을 가로챈다 — 답이 이미 정해졌거나(RespondPanel
+  // 단계) 이번엔 안 묻기로 했으면 빈 맵을 넘겨 그쪽 단축키(채점 1~4)와 겹치지 않게 한다.
+  useKeyBinding(
+    current && !editingCard && shouldPromptConfidence
+      ? { '1': () => pickConfidence(1), '2': () => pickConfidence(2), '3': () => pickConfidence(3) }
+      : {},
+  )
+
   async function handleGraded(
     grade: Grade,
     errorTag: ErrorTag | null,
     signals: InteractionSignals,
   ) {
     if (!current) return
-    await atlas.recordInteraction(current.id, grade, effectiveConfidence, errorTag, {
+    await atlas.recordInteraction(current.id, grade, confidenceToRecord, errorTag, {
       ...signals,
       pretest: current.id === pretestItemId,
       ...(sessionId ? { sessionId } : {}),
@@ -197,6 +252,7 @@ export function StudyView() {
     // KC가 있는 카드는 kcConfidence 맵이 세션 내내 값을 들고 있으니 리셋할 필요가 없다.
     // KC가 없는 카드만 이 로컬 state를 쓰므로 매번 초기화해 다음 카드에서 새로 묻는다.
     setConfidence(null)
+    setEditingCard(false)
     setSessionIndex((i) => i + 1)
   }
 
@@ -299,24 +355,42 @@ export function StudyView() {
               </p>
             </div>
           )}
-          {currentKc && <span className="kc-badge">{currentKc.name}</span>}
-          {effectiveConfidence === null ? (
+          <div className="card-header">
+            {currentKc && <span className="kc-badge">{currentKc.name}</span>}
+            <button
+              type="button"
+              className="reveal edit-current-card"
+              onClick={() => setEditingCard((v) => !v)}
+            >
+              {editingCard ? '편집 취소' : '이 카드 편집'}
+            </button>
+          </div>
+          {editingCard ? (
+            <ItemForm key={current.id} kcs={atlas.kcs} initial={current} onDone={() => setEditingCard(false)} />
+          ) : shouldPromptConfidence ? (
             <div className="confidence">
               <p className="muted">답을 보기 전에 — 얼마나 자신 있나요?</p>
               <div className="confidence-buttons">
-                <button onClick={() => pickConfidence(1)}>모르겠다</button>
-                <button onClick={() => pickConfidence(2)}>애매하다</button>
-                <button onClick={() => pickConfidence(3)}>확실하다</button>
+                <button onClick={() => pickConfidence(1)}>모르겠다 (1)</button>
+                <button onClick={() => pickConfidence(2)}>애매하다 (2)</button>
+                <button onClick={() => pickConfidence(3)}>확실하다 (3)</button>
               </div>
             </div>
           ) : (
             <>
-              {sessionIndex > groupStartIndex && (
+              {current.kcId != null && kcConfidence.has(current.kcId) && sessionIndex > groupStartIndex && (
                 <p className="muted confidence-carried">
                   이 지식요소는 이번 세션에서 이미 답변해 다시 묻지 않습니다 (
-                  {CONFIDENCE_LABEL[effectiveConfidence]})
+                  {CONFIDENCE_LABEL[kcConfidence.get(current.kcId) as Confidence]})
                 </p>
               )}
+              {current.kcId != null &&
+                !kcConfidence.has(current.kcId) &&
+                historicallyAskedKcIds.has(current.kcId) && (
+                  <p className="muted confidence-carried">
+                    이 지식요소는 예전에 이미 확인해 이번엔 묻지 않습니다.
+                  </p>
+                )}
               <RespondPanel key={current.id} item={current} onGraded={handleGraded} />
             </>
           )}

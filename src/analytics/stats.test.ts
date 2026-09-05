@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest'
-import { computeTotals, countMisconceptions, flagLowQualityItems } from './stats'
+import {
+  computeTotals,
+  countMisconceptions,
+  flagLowQualityItems,
+  countErrorTags,
+  accuracyTrend,
+  slowestItems,
+} from './stats'
 import type { Interaction } from '../core/types'
 import { flashcard, history, interaction, mcq } from '../test/factories'
 
@@ -130,5 +137,135 @@ describe('flagLowQualityItems', () => {
     const easyLog = Array.from({ length: 12 }, (_, i) => interaction(easy.id, 'good', i))
     const reports = flagLowQualityItems([easy, bad], byItemOf(badLog, easyLog))
     expect(reports.map((r) => r.flag)).toEqual(['broken', 'too-easy'])
+  })
+})
+
+describe('countErrorTags(v32)', () => {
+  it('again으로 채점되며 사유를 고른 것만 세고, 많이 걸린 순으로 준다', () => {
+    const item = flashcard()
+    const byItem = new Map([
+      [
+        item.id,
+        [
+          interaction(item.id, 'again', 0, { errorTag: 'concept' }),
+          interaction(item.id, 'again', 1, { errorTag: 'concept' }),
+          interaction(item.id, 'again', 2, { errorTag: 'carelessness' }),
+          interaction(item.id, 'again', 3, { errorTag: null }), // 사유 건너뛰기
+          interaction(item.id, 'good', 4), // 정답에는 애초에 errorTag가 없다
+        ],
+      ],
+    ])
+    expect(countErrorTags(byItem)).toEqual([
+      { tag: 'concept', count: 2 },
+      { tag: 'carelessness', count: 1 },
+    ])
+  })
+
+  it('로그가 없으면 빈 배열', () => {
+    expect(countErrorTags(new Map())).toEqual([])
+  })
+})
+
+describe('accuracyTrend(v32)', () => {
+  const NOW32 = new Date('2026-01-10T12:00:00.000Z')
+
+  it('일별 리뷰 수·정답률을 낸다', () => {
+    const item = flashcard()
+    const byItem = new Map([
+      [
+        item.id,
+        [
+          interaction(item.id, 'good', 8),
+          interaction(item.id, 'again', 8),
+          interaction(item.id, 'good', 9),
+        ],
+      ],
+    ])
+    const result = accuracyTrend(byItem, NOW32, 30)
+    expect(result.find((d) => d.dateKey === '2026-01-09')).toMatchObject({ reviews: 2, accuracy: 0.5 })
+    expect(result.find((d) => d.dateKey === '2026-01-10')).toMatchObject({
+      reviews: 1,
+      accuracy: 1,
+      label: '오늘',
+    })
+  })
+
+  it('창 밖의 오래된 로그는 건너뛴다', () => {
+    const item = flashcard()
+    const byItem = new Map([[item.id, [interaction(item.id, 'good', 0)]]])
+    const result = accuracyTrend(byItem, NOW32, 5) // 5일 창 — dayOffset 0은 훨씬 이전
+    expect(result.every((d) => d.reviews === 0)).toBe(true)
+  })
+
+  it('리뷰가 없으면 reviews 0·accuracy 0, 창 길이만큼 날짜를 채운다', () => {
+    const result = accuracyTrend(new Map(), NOW32, 7)
+    expect(result).toHaveLength(7)
+    expect(result.every((d) => d.reviews === 0 && d.accuracy === 0)).toBe(true)
+  })
+})
+
+describe('slowestItems(v32)', () => {
+  it('정답 중 응답시간 중앙값이 큰 카드부터 순서를 매긴다(표본 3회 이상만)', () => {
+    const slow = flashcard()
+    const fast = flashcard()
+    const tooFew = flashcard()
+    const byItem = new Map([
+      [
+        slow.id,
+        [
+          interaction(slow.id, 'good', 0, { latencyMs: 9000 }),
+          interaction(slow.id, 'good', 1, { latencyMs: 8000 }),
+          interaction(slow.id, 'good', 2, { latencyMs: 10000 }),
+        ],
+      ],
+      [
+        fast.id,
+        [
+          interaction(fast.id, 'good', 0, { latencyMs: 1000 }),
+          interaction(fast.id, 'good', 1, { latencyMs: 1200 }),
+          interaction(fast.id, 'good', 2, { latencyMs: 900 }),
+        ],
+      ],
+      [
+        tooFew.id,
+        [
+          interaction(tooFew.id, 'good', 0, { latencyMs: 50000 }),
+          interaction(tooFew.id, 'good', 1, { latencyMs: 50000 }),
+        ],
+      ],
+    ])
+    const result = slowestItems([slow, fast, tooFew], byItem)
+    expect(result.map((r) => r.itemId)).toEqual([slow.id, fast.id])
+    expect(result[0]).toMatchObject({ medianLatencyMs: 9000, reviews: 3 })
+  })
+
+  it('again으로 채점된 응답, latencyMs 없는 로그는 표본에서 제외한다', () => {
+    const item = flashcard()
+    const byItem = new Map([
+      [
+        item.id,
+        [
+          interaction(item.id, 'again', 0, { latencyMs: 20000 }),
+          interaction(item.id, 'good', 1, { latencyMs: 3000 }),
+          interaction(item.id, 'good', 2),
+          interaction(item.id, 'good', 3, { latencyMs: 4000 }),
+        ],
+      ],
+    ])
+    // 유효 표본(정답 + latencyMs 있음)이 2건뿐이라 최소 3회 기준에 못 미친다.
+    expect(slowestItems([item], byItem)).toEqual([])
+  })
+
+  it('limit으로 상위 N개만 돌려준다', () => {
+    const items = Array.from({ length: 3 }, () => flashcard())
+    const byItem = new Map(
+      items.map((item, idx) => [
+        item.id,
+        Array.from({ length: 3 }, (_, i) =>
+          interaction(item.id, 'good', i, { latencyMs: (idx + 1) * 1000 }),
+        ),
+      ]),
+    )
+    expect(slowestItems(items, byItem, 2)).toHaveLength(2)
   })
 })
