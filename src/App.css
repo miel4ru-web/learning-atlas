@@ -113,6 +113,7 @@
   .update-banner { grid-area: banner; }
   .sidenav {
     grid-area: sidenav;
+    display: block;
     border-right: none;
     border-bottom: 1px solid var(--border);
     background: var(--surface);
