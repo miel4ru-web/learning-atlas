@@ -411,6 +411,7 @@
   cursor: pointer;
 }
 .confidence-buttons button:hover { border-color: var(--accent); color: var(--accent); }
+.confidence-carried { text-align: center; font-size: 0.8rem; }
 
 .kc-badge {
   display: inline-block;

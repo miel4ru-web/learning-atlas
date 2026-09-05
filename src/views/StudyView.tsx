@@ -18,12 +18,18 @@ import { seedDeck, SEED_DECK_SIZE } from '../core/seedDeck'
 import { RespondPanel } from '../activities/RespondPanel'
 
 const DEFAULT_BUDGET_MIN = 20
+const CONFIDENCE_LABEL: Record<Confidence, string> = { 1: '모르겠다', 2: '애매하다', 3: '확실하다' }
 
 export function StudyView() {
   const atlas = useAtlas()
   const [sessionPlan, setSessionPlan] = useState<Item[] | null>(null)
   const [sessionIndex, setSessionIndex] = useState(0)
   const [confidence, setConfidence] = useState<Confidence | null>(null)
+  // 같은 KC가 연속될 때 자신감을 한 번만 묻고 그 구간 전체에 그대로 적용한다
+  // (인터리빙 제약이 동일 KC 연속을 최대 2장으로 막아 두긴 하지만, 그 안에서도
+  // 매번 물어볼 필요는 없다). groupStartIndex는 지금 confidence 값을 처음 고른
+  // sessionIndex — 화면에는 이 값보다 뒤에 있을 때만 "이어서 적용" 문구를 보여준다.
+  const [groupStartIndex, setGroupStartIndex] = useState(0)
   const [budgetInput, setBudgetInput] = useState(String(DEFAULT_BUDGET_MIN))
   const [seeding, setSeeding] = useState(false)
   const [pretestItemId, setPretestItemId] = useState<string | null>(null)
@@ -125,6 +131,7 @@ export function StudyView() {
     setPretestItemId(pretest?.id ?? null)
     setSessionIndex(0)
     setConfidence(null)
+    setGroupStartIndex(0)
     atlas.clearSessionScope() // 한 번 쓰고 나면 다음 "오늘 학습 시작"은 다시 전체 풀로.
   }
 
@@ -142,8 +149,10 @@ export function StudyView() {
     setSessionId(session.id)
     setSessionPlan(plan)
     setPretestItemId(session.pretestItemId)
-    setSessionIndex(Math.min(resumeIndex(session, atlas.interactions), plan.length))
+    const resumeAt = Math.min(resumeIndex(session, atlas.interactions), plan.length)
+    setSessionIndex(resumeAt)
     setConfidence(null)
+    setGroupStartIndex(resumeAt)
   }
 
   async function endSession() {
@@ -157,6 +166,11 @@ export function StudyView() {
   const current = sessionPlan ? sessionPlan[sessionIndex] : undefined
   const currentKc = current?.kcId ? atlas.kcById.get(current.kcId) : undefined
 
+  function pickConfidence(value: Confidence) {
+    setConfidence(value)
+    setGroupStartIndex(sessionIndex)
+  }
+
   async function handleGraded(
     grade: Grade,
     errorTag: ErrorTag | null,
@@ -168,7 +182,11 @@ export function StudyView() {
       pretest: current.id === pretestItemId,
       ...(sessionId ? { sessionId } : {}),
     })
-    setConfidence(null)
+    const nextItem = sessionPlan?.[sessionIndex + 1]
+    // 다음 카드가 지금과 같은(그리고 실재하는) KC일 때만 자신감을 이어간다 —
+    // KC가 없는 카드끼리는 서로 무관할 수 있어 묶지 않는다.
+    const sameKcGroup = current.kcId != null && nextItem?.kcId === current.kcId
+    if (!sameKcGroup) setConfidence(null)
     setSessionIndex((i) => i + 1)
   }
 
@@ -276,13 +294,20 @@ export function StudyView() {
             <div className="confidence">
               <p className="muted">답을 보기 전에 — 얼마나 자신 있나요?</p>
               <div className="confidence-buttons">
-                <button onClick={() => setConfidence(1)}>모르겠다</button>
-                <button onClick={() => setConfidence(2)}>애매하다</button>
-                <button onClick={() => setConfidence(3)}>확실하다</button>
+                <button onClick={() => pickConfidence(1)}>모르겠다</button>
+                <button onClick={() => pickConfidence(2)}>애매하다</button>
+                <button onClick={() => pickConfidence(3)}>확실하다</button>
               </div>
             </div>
           ) : (
-            <RespondPanel key={current.id} item={current} onGraded={handleGraded} />
+            <>
+              {sessionIndex > groupStartIndex && (
+                <p className="muted confidence-carried">
+                  같은 개념이 이어져 자신감을 다시 묻지 않습니다 ({CONFIDENCE_LABEL[confidence]})
+                </p>
+              )}
+              <RespondPanel key={current.id} item={current} onGraded={handleGraded} />
+            </>
           )}
           <p className="session-progress muted">
             {sessionIndex + 1} / {sessionPlan.length}
