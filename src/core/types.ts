@@ -237,4 +237,11 @@ export interface StudyPrefs {
   dailyReviewCap: number | null
   /** true면 신규(미채점) 카드를 세션 후보에서 뺀다 — 밀린 복습부터 갚는다. */
   vacationMode: boolean
+  /**
+   * 복습 알림 수신 동의(PWA, v28). true여도 브라우저 Notification 권한이
+   * 없으면 실제로는 알림이 안 뜬다 — 권한 자체는 여기 저장하지 않고 항상
+   * `Notification.permission`을 그때그때 읽는다(사용자가 브라우저 설정에서
+   * 나중에 취소해도 이 값과 어긋나지 않도록). 없으면(v27 이전 백업) false와 같다.
+   */
+  notificationsEnabled?: boolean
 }

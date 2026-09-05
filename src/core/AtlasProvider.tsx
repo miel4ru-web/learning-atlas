@@ -10,17 +10,8 @@ import { deriveEloState } from '../scheduler/elo'
 import { findUrgentKcIds } from '../scheduler/session'
 import { calibrationReport, calibrationWarning } from './calibration'
 import { pretestedItemIds, scoredOnly } from './interactions'
+import { buildSchedulerForItem, countDue, groupByItem } from './dueCount'
 import { AtlasContext, type AtlasData } from './atlas'
-
-function groupByItem(interactions: Interaction[]): Map<string, Interaction[]> {
-  const map = new Map<string, Interaction[]>()
-  for (const it of interactions) {
-    const list = map.get(it.itemId)
-    if (list) list.push(it)
-    else map.set(it.itemId, [it])
-  }
-  return map
-}
 
 function latestPerItem(interactions: Interaction[]): Map<string, Interaction> {
   const latest = new Map<string, Interaction>()
@@ -73,13 +64,7 @@ export function AtlasProvider({ children }: { children: ReactNode }) {
   // (원본 interactions는 그대로 남아 "오늘 몇 장 했나" 같은 활동 집계에 쓰인다.)
   const scored = useMemo(() => scoredOnly(interactions), [interactions])
 
-  const byItem = useMemo(() => {
-    const map = groupByItem(scored)
-    for (const item of items) {
-      if (!map.has(item.id)) map.set(item.id, [])
-    }
-    return map
-  }, [items, scored])
+  const byItem = useMemo(() => groupByItem(items, scored), [items, scored])
 
   // v3: 저장된 재적합 파라미터가 있으면 그 가중치(w)로, 없으면 FSRS-6 기본값으로.
   // v11(Atlas 5부): 목표 파지율은 전역 하나가 아니라 KC마다 다를 수 있다 —
@@ -93,29 +78,12 @@ export function AtlasProvider({ children }: { children: ReactNode }) {
     [customWeights, globalRetention],
   )
 
-  // 아이템 → (그 KC의 목표 파지율로 만든) 스케줄러. 등장하는 파지율 값마다
-  // 인스턴스를 하나만 미리 만들어 두고, 반환 함수는 조회만 한다.
-  const schedulerForItem = useMemo(() => {
-    const retentionOfKc = new Map(kcs.map((k) => [k.id, k.requestRetention]))
-    const itemKc = new Map(items.map((it) => [it.id, it.kcId]))
-
-    const retentions = new Set<number>([globalRetention])
-    for (const k of kcs) if (k.requestRetention != null) retentions.add(k.requestRetention)
-
-    const byRetention = new Map<number, ReturnType<typeof buildScheduler>>()
-    for (const r of retentions) {
-      byRetention.set(
-        r,
-        buildScheduler(customWeights ? { w: customWeights, request_retention: r } : { request_retention: r }),
-      )
-    }
-
-    return (itemId: string) => {
-      const kcId = itemKc.get(itemId) ?? null
-      const r = (kcId !== null ? retentionOfKc.get(kcId) : undefined) ?? globalRetention
-      return byRetention.get(r) ?? byRetention.get(globalRetention)!
-    }
-  }, [kcs, items, customWeights, globalRetention])
+  // 아이템 → (그 KC의 목표 파지율로 만든) 스케줄러. core/dueCount.ts의
+  // buildSchedulerForItem이 서비스 워커와 공유하는 구현이다(중복 없음).
+  const schedulerForItem = useMemo(
+    () => buildSchedulerForItem(items, kcs, schedulerSettings ?? null),
+    [items, kcs, schedulerSettings],
+  )
 
   const cardStates = useMemo<Map<string, CardState>>(
     () => deriveAllCardStates(byItem, schedulerForItem),
@@ -137,15 +105,9 @@ export function AtlasProvider({ children }: { children: ReactNode }) {
   )
   const leechItemIds = useMemo(() => new Set(leechItems.map((i) => i.id)), [leechItems])
 
-  const dueCount = useMemo(() => {
-    let n = 0
-    for (const [itemId, state] of cardStates) {
-      if (state.state !== 'new' && state.due.getTime() <= now.getTime() && !leechItemIds.has(itemId)) {
-        n++
-      }
-    }
-    return n
-  }, [cardStates, now, leechItemIds])
+  // 만기 판정 규칙 자체(core/dueCount.ts countDue)는 서비스 워커·리마인더 훅과
+  // 공유한다 — 여기서 복사해 두면 한쪽만 고쳐지는 사고가 난다.
+  const dueCount = useMemo(() => countDue(cardStates, leechItemIds, now), [cardStates, leechItemIds, now])
 
   const kcById = useMemo(() => new Map(kcs.map((k) => [k.id, k])), [kcs])
 

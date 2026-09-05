@@ -57,6 +57,28 @@ export function StudyView() {
     atlas.saveStudyPrefs({ ...studyPrefs, vacationMode: !studyPrefs.vacationMode })
   }
 
+  // 복습 알림(PWA, v28). Notification.permission은 반응형이 아니라(바뀌어도
+  // 리렌더를 유발하지 않는다) 스냅샷을 상태로 들고 있다가 요청 결과로 갱신한다.
+  const notificationsSupported = typeof Notification !== 'undefined'
+  const [notifPermission, setNotifPermission] = useState(
+    notificationsSupported ? Notification.permission : 'denied',
+  )
+
+  function toggleNotifications() {
+    const turningOn = !studyPrefs.notificationsEnabled
+    if (turningOn && notifPermission === 'default') {
+      // 유저 제스처(이 클릭) 안에서 동기적으로 호출해야 프롬프트가 뜬다 — await 앞에서 부른다.
+      Notification.requestPermission().then((result) => {
+        setNotifPermission(result)
+        if (result === 'granted') {
+          atlas.saveStudyPrefs({ ...studyPrefs, notificationsEnabled: true })
+        }
+      })
+      return
+    }
+    atlas.saveStudyPrefs({ ...studyPrefs, notificationsEnabled: turningOn })
+  }
+
   // 콜드스타트(6부 함정) — 카드가 하나도 없을 때만 보이는 맛보기 덱. 기존
   // 가져오기 경로(merge)를 그대로 쓰므로 여러 번 눌러도 카드가 불어나지 않는다.
   async function addSeedDeck() {
@@ -202,6 +224,24 @@ export function StudyView() {
               />
               장
             </label>
+            <label className="notifications-toggle">
+              <input
+                type="checkbox"
+                checked={studyPrefs.notificationsEnabled ?? false}
+                onChange={toggleNotifications}
+                disabled={!notificationsSupported}
+              />
+              알림 받기 — 만기 카드가 있을 때 브라우저 알림
+            </label>
+            {notifPermission === 'denied' && (
+              <p className="muted">
+                브라우저에서 알림이 차단되어 있습니다. 사이트 설정에서 허용으로 바꿔주세요.
+              </p>
+            )}
+            <p className="muted reminder-caveat">
+              탭이 열려 있을 때만 확실히 동작합니다. 앱을 완전히 닫은 상태에서의 알림은
+              브라우저·기기에 따라 오지 않을 수 있습니다.
+            </p>
           </div>
 
           <button className="start" onClick={startSession} disabled={atlas.items.length === 0}>

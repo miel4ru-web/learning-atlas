@@ -14,6 +14,25 @@
 
 .view { display: grid; gap: 20px; }
 
+.update-banner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 8px 16px;
+  background: var(--accent);
+  color: var(--accent-contrast);
+  font-size: 0.85rem;
+}
+.update-banner button {
+  padding: 4px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--accent-contrast);
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
 .muted { color: var(--text-muted); }
 
 /* ---- 패널: 각 섹션을 카드로 ---- */
@@ -367,6 +386,8 @@
   font-size: 0.85rem;
 }
 .vacation-toggle { justify-content: center; }
+.notifications-toggle { justify-content: center; }
+.reminder-caveat { font-size: 0.78rem; max-width: 40ch; margin: 0 auto; text-align: center; }
 .start {
   padding: 12px 24px;
   border-radius: 8px;

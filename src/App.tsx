@@ -7,12 +7,16 @@ import { useAtlas } from './core/atlas'
 import { useHashRoute } from './shell/useHashRoute'
 import { TabBar } from './shell/TabBar'
 import { SideNav } from './shell/SideNav'
+import { UpdateBanner } from './shell/UpdateBanner'
+import { useForegroundReminder } from './shell/useForegroundReminder'
 import { VIEWS, VIEW_IDS, DEFAULT_VIEW } from './views/registry'
 import './App.css'
 
 function Shell() {
-  const { loading, dueCount, items, leechItems } = useAtlas()
+  const atlas = useAtlas()
+  const { loading, dueCount, items, leechItems } = atlas
   const [active, navigate] = useHashRoute(VIEW_IDS, DEFAULT_VIEW)
+  useForegroundReminder(atlas)
 
   if (loading) {
     return (
@@ -28,6 +32,7 @@ function Shell() {
 
   return (
     <div className="app">
+      <UpdateBanner />
       <SideNav active={active} onNavigate={navigate} />
       <main className="shell">
         <header className="topbar">

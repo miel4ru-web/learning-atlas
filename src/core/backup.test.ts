@@ -116,6 +116,27 @@ describe('parseBackup 거부 케이스', () => {
     broken.data.studyPrefs = { dailyReviewCap: 'many', vacationMode: false }
     expect(parseBackup(JSON.stringify(broken))).toMatchObject({ ok: false })
   })
+  it('studyPrefs.notificationsEnabled(v28)가 있으면 왕복되고, 없어도(구버전) 통과한다', () => {
+    const withField = ok()
+    withField.data.studyPrefs = { dailyReviewCap: null, vacationMode: false, notificationsEnabled: true }
+    const result = parseBackup(JSON.stringify(withField))
+    expect(result).toMatchObject({ ok: true })
+    if (result.ok) {
+      expect(result.snapshot.studyPrefs).toEqual({
+        dailyReviewCap: null,
+        vacationMode: false,
+        notificationsEnabled: true,
+      })
+    }
+
+    const withoutField = ok()
+    withoutField.data.studyPrefs = { dailyReviewCap: null, vacationMode: false }
+    expect(parseBackup(JSON.stringify(withoutField))).toMatchObject({ ok: true })
+
+    const broken = ok()
+    broken.data.studyPrefs = { dailyReviewCap: null, vacationMode: false, notificationsEnabled: 'yes' }
+    expect(parseBackup(JSON.stringify(broken))).toMatchObject({ ok: false })
+  })
   it('로그가 존재하지 않는 카드를 가리키면(참조 무결성)', () => {
     const f = ok()
     f.data.interactions[0].itemId = 'ghost'

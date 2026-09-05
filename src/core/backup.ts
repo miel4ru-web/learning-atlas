@@ -183,7 +183,9 @@ function isStudyPrefs(v: unknown): v is StudyPrefs {
   return (
     isObject(v) &&
     (v.dailyReviewCap === null || (typeof v.dailyReviewCap === 'number' && v.dailyReviewCap >= 0)) &&
-    typeof v.vacationMode === 'boolean'
+    typeof v.vacationMode === 'boolean' &&
+    // v28: 없으면 구버전 백업(false와 같다), 있으면 형태만 확인한다.
+    (v.notificationsEnabled === undefined || typeof v.notificationsEnabled === 'boolean')
   )
 }
 
