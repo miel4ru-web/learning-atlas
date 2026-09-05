@@ -12,21 +12,23 @@ interface Props {
 export function SideNav({ active, onNavigate }: Props) {
   return (
     <nav className="sidenav" aria-label="주요 화면">
-      <div className="sidenav-brand">Learning Atlas</div>
-      <ul className="sidenav-list">
-        {VIEWS.map((v) => (
-          <li key={v.id}>
-            <button
-              type="button"
-              className={v.id === active ? 'sidenav-item active' : 'sidenav-item'}
-              aria-current={v.id === active ? 'page' : undefined}
-              onClick={() => onNavigate(v.id)}
-            >
-              {v.label}
-            </button>
-          </li>
-        ))}
-      </ul>
+      <div className="sidenav-inner">
+        <div className="sidenav-brand">Learning Atlas</div>
+        <ul className="sidenav-list">
+          {VIEWS.map((v) => (
+            <li key={v.id}>
+              <button
+                type="button"
+                className={v.id === active ? 'sidenav-item active' : 'sidenav-item'}
+                aria-current={v.id === active ? 'page' : undefined}
+                onClick={() => onNavigate(v.id)}
+              >
+                {v.label}
+              </button>
+            </li>
+          ))}
+        </ul>
+      </div>
     </nav>
   )
 }

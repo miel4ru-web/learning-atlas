@@ -80,6 +80,7 @@
   font-weight: 600;
   font-size: 1.05rem;
   padding: 4px 12px 18px;
+  white-space: nowrap;
 }
 .sidenav-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
 .sidenav-item {
@@ -100,27 +101,48 @@
 @media (min-width: 900px) {
   .app {
     display: grid;
-    grid-template-columns: 232px minmax(0, 1fr);
+    grid-template-columns: 1fr;
     /* update-banner(있을 때만)·sidenav·shell 세 자식을 grid auto-placement에 맡기면
        배너가 1열을 차지해버리고 본문(shell)이 사이드바 자리로 밀려난다 — 이름 붙은
-       영역으로 명시해 배너는 위쪽 전체 폭, 사이드바는 좌측, 본문은 우측으로 고정한다. */
+       영역으로 명시해 위에서 아래로 배너 → 상단 네비 → 본문 순으로 고정한다. */
     grid-template-areas:
-      'banner banner'
-      'sidenav main';
+      'banner'
+      'sidenav'
+      'main';
   }
   .update-banner { grid-area: banner; }
   .sidenav {
     grid-area: sidenav;
-    display: block;
-    padding: 24px 12px;
-    border-right: 1px solid var(--border);
+    border-right: none;
+    border-bottom: 1px solid var(--border);
     background: var(--surface);
+    /* 스크롤해도 화면 상단에 그대로 붙어 있도록 고정 */
     position: sticky;
     top: 0;
-    align-self: start;
-    max-height: 100vh;
-    overflow-y: auto;
+    z-index: 10;
   }
+  .sidenav-inner {
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 0 28px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .sidenav-brand { padding: 0 24px 0 0; }
+  .sidenav-list {
+    flex: 1;
+    display: flex;
+    gap: 4px;
+  }
+  .sidenav-item {
+    /* 항목마다 flex:1 로 남는 폭을 똑같이 나눠 가져 좌우로 균등 분배되게 한다 */
+    flex: 1;
+    text-align: center;
+    padding: 16px 12px;
+    border-radius: 0;
+  }
+  .sidenav-item.active { background: none; box-shadow: inset 0 -2px 0 var(--accent); }
   .tabbar { display: none; }
   .topbar h1 { display: none; }
   .topbar { justify-content: flex-end; margin-bottom: 4px; }
@@ -128,6 +150,8 @@
   .shell {
     grid-area: main;
     max-width: 1080px;
+    width: 100%;
+    margin: 0 auto;
     padding: 34px 32px 88px;
     gap: 24px;
   }
