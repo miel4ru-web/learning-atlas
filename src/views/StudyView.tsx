@@ -24,11 +24,14 @@ export function StudyView() {
   const atlas = useAtlas()
   const [sessionPlan, setSessionPlan] = useState<Item[] | null>(null)
   const [sessionIndex, setSessionIndex] = useState(0)
+  // KC가 없는 카드(그룹핑 대상 아님)용 — 매번 새로 묻는다.
   const [confidence, setConfidence] = useState<Confidence | null>(null)
-  // 같은 KC가 연속될 때 자신감을 한 번만 묻고 그 구간 전체에 그대로 적용한다
-  // (인터리빙 제약이 동일 KC 연속을 최대 2장으로 막아 두긴 하지만, 그 안에서도
-  // 매번 물어볼 필요는 없다). groupStartIndex는 지금 confidence 값을 처음 고른
-  // sessionIndex — 화면에는 이 값보다 뒤에 있을 때만 "이어서 적용" 문구를 보여준다.
+  // 세션 전체에서 KC별로 이미 고른 자신감 값. 인터리빙 제약(동일 KC 연속 최대 2장) 탓에
+  // KC가 자주 바뀌어도, 같은 KC가 세션 중 다시 나오면(인접이 아니어도) 다시 묻지 않는다 —
+  // "세션당 KC 1회"로 자기평가 질문 빈도를 낮춘다.
+  const [kcConfidence, setKcConfidence] = useState<Map<string, Confidence>>(new Map())
+  // groupStartIndex는 "자신감을 마지막으로 새로 고른 sessionIndex" — 화면에는 이 값보다
+  // 뒤에 있을 때만(=지금 막 고른 게 아닐 때만) "다시 묻지 않습니다" 안내를 보여준다.
   const [groupStartIndex, setGroupStartIndex] = useState(0)
   const [budgetInput, setBudgetInput] = useState(String(DEFAULT_BUDGET_MIN))
   const [seeding, setSeeding] = useState(false)
@@ -131,6 +134,7 @@ export function StudyView() {
     setPretestItemId(pretest?.id ?? null)
     setSessionIndex(0)
     setConfidence(null)
+    setKcConfidence(new Map())
     setGroupStartIndex(0)
     atlas.clearSessionScope() // 한 번 쓰고 나면 다음 "오늘 학습 시작"은 다시 전체 풀로.
   }
@@ -152,6 +156,7 @@ export function StudyView() {
     const resumeAt = Math.min(resumeIndex(session, atlas.interactions), plan.length)
     setSessionIndex(resumeAt)
     setConfidence(null)
+    setKcConfidence(new Map())
     setGroupStartIndex(resumeAt)
   }
 
@@ -165,9 +170,16 @@ export function StudyView() {
 
   const current = sessionPlan ? sessionPlan[sessionIndex] : undefined
   const currentKc = current?.kcId ? atlas.kcById.get(current.kcId) : undefined
+  // KC가 있는 카드는 세션 캐시(kcConfidence)에서, 없는 카드는 로컬 confidence에서 가져온다.
+  const effectiveConfidence: Confidence | null =
+    current?.kcId != null ? kcConfidence.get(current.kcId) ?? null : confidence
 
   function pickConfidence(value: Confidence) {
-    setConfidence(value)
+    if (current?.kcId != null) {
+      setKcConfidence((prev) => new Map(prev).set(current.kcId as string, value))
+    } else {
+      setConfidence(value)
+    }
     setGroupStartIndex(sessionIndex)
   }
 
@@ -177,16 +189,14 @@ export function StudyView() {
     signals: InteractionSignals,
   ) {
     if (!current) return
-    await atlas.recordInteraction(current.id, grade, confidence, errorTag, {
+    await atlas.recordInteraction(current.id, grade, effectiveConfidence, errorTag, {
       ...signals,
       pretest: current.id === pretestItemId,
       ...(sessionId ? { sessionId } : {}),
     })
-    const nextItem = sessionPlan?.[sessionIndex + 1]
-    // 다음 카드가 지금과 같은(그리고 실재하는) KC일 때만 자신감을 이어간다 —
-    // KC가 없는 카드끼리는 서로 무관할 수 있어 묶지 않는다.
-    const sameKcGroup = current.kcId != null && nextItem?.kcId === current.kcId
-    if (!sameKcGroup) setConfidence(null)
+    // KC가 있는 카드는 kcConfidence 맵이 세션 내내 값을 들고 있으니 리셋할 필요가 없다.
+    // KC가 없는 카드만 이 로컬 state를 쓰므로 매번 초기화해 다음 카드에서 새로 묻는다.
+    setConfidence(null)
     setSessionIndex((i) => i + 1)
   }
 
@@ -290,7 +300,7 @@ export function StudyView() {
             </div>
           )}
           {currentKc && <span className="kc-badge">{currentKc.name}</span>}
-          {confidence === null ? (
+          {effectiveConfidence === null ? (
             <div className="confidence">
               <p className="muted">답을 보기 전에 — 얼마나 자신 있나요?</p>
               <div className="confidence-buttons">
@@ -303,7 +313,8 @@ export function StudyView() {
             <>
               {sessionIndex > groupStartIndex && (
                 <p className="muted confidence-carried">
-                  같은 개념이 이어져 자신감을 다시 묻지 않습니다 ({CONFIDENCE_LABEL[confidence]})
+                  이 지식요소는 이번 세션에서 이미 답변해 다시 묻지 않습니다 (
+                  {CONFIDENCE_LABEL[effectiveConfidence]})
                 </p>
               )}
               <RespondPanel key={current.id} item={current} onGraded={handleGraded} />
