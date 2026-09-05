@@ -101,8 +101,16 @@
   .app {
     display: grid;
     grid-template-columns: 232px minmax(0, 1fr);
+    /* update-banner(있을 때만)·sidenav·shell 세 자식을 grid auto-placement에 맡기면
+       배너가 1열을 차지해버리고 본문(shell)이 사이드바 자리로 밀려난다 — 이름 붙은
+       영역으로 명시해 배너는 위쪽 전체 폭, 사이드바는 좌측, 본문은 우측으로 고정한다. */
+    grid-template-areas:
+      'banner banner'
+      'sidenav main';
   }
+  .update-banner { grid-area: banner; }
   .sidenav {
+    grid-area: sidenav;
     display: block;
     padding: 24px 12px;
     border-right: 1px solid var(--border);
@@ -118,6 +126,7 @@
   .topbar { justify-content: flex-end; margin-bottom: 4px; }
 
   .shell {
+    grid-area: main;
     max-width: 1080px;
     padding: 34px 32px 88px;
     gap: 24px;
