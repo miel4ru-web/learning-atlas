@@ -109,6 +109,11 @@
       'banner'
       'sidenav'
       'main';
+    /* .app의 min-height:100vh 때문에 align-content 기본값(normal→stretch)이
+       내용이 뷰포트보다 짧을 때(예: 학습 탭의 세션 시작 화면) 빈 banner 행까지
+       포함한 세 행 모두를 균등하게 늘려버려 상단에 의미 없는 여백이 생긴다 —
+       각 행을 내용 높이만큼만 차지하게 고정한다. */
+    align-content: start;
   }
   .update-banner { grid-area: banner; }
   .sidenav {
