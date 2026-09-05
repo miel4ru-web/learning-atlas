@@ -32,7 +32,9 @@ self.addEventListener('notificationclick', (event) => {
   event.waitUntil(
     self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((list) => {
       for (const c of list) if ('focus' in c) return c.focus()
-      return self.clients.openWindow('/')
+      // scope 자체가 배포 경로(GitHub Pages면 서브패스)를 이미 포함한 절대
+      // URL이라, '/'로 고정하면 서브패스 배포에서 엉뚱한 곳을 연다.
+      return self.clients.openWindow(self.registration.scope)
     }),
   )
 })
@@ -98,7 +100,7 @@ async function checkAndNotify(): Promise<void> {
   await self.registration.showNotification('복습할 카드가 있어요', {
     body: `${dueCount}장 대기 중입니다`,
     tag: 'learning-atlas-due',
-    icon: '/icons/icon-192.png',
+    icon: new URL('icons/icon-192.png', self.registration.scope).href,
   })
   await setSwLastNotifiedDate(today)
 }

@@ -350,6 +350,7 @@
 .resume-note p { font-size: 0.85rem; margin: 0; }
 .empty-start { display: grid; gap: 10px; justify-items: center; }
 .seed-note { font-size: 0.8rem; max-width: 34ch; line-height: 1.5; }
+.sync-block,
 .csv-block {
   margin-top: 18px;
   padding-top: 16px;
@@ -357,6 +358,24 @@
   display: grid;
   gap: 10px;
   justify-items: start;
+}
+.sync-block h3 { font-size: 0.9rem; font-weight: 600; margin: 0; }
+.sync-block p { font-size: 0.85rem; line-height: 1.6; margin: 0; }
+.sync-token-note { max-width: 60ch; }
+.sync-form {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 10px;
+  width: 100%;
+}
+.sync-form label { display: grid; gap: 4px; font-size: 0.8rem; }
+.sync-form input {
+  padding: 6px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 0.85rem;
 }
 .csv-block h3 { font-size: 0.9rem; font-weight: 600; margin: 0; }
 .csv-block p { font-size: 0.85rem; line-height: 1.6; margin: 0; }

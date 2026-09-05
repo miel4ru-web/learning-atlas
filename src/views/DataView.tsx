@@ -8,6 +8,16 @@ import * as db from '../core/db'
 import { serializeBackup, parseBackup, backupFilename, type BackupSummary } from '../core/backup'
 import { seedDeck, SEED_DECK_SIZE } from '../core/seedDeck'
 import { buildCsvImport, type CsvImportResult } from '../core/csvImport'
+import { checkRepoAccess, fetchRemoteFile, putRemoteFile } from '../core/githubSync'
+import {
+  getLastSyncedAt,
+  getSyncConfig,
+  setLastSyncedAt,
+  setSyncConfig,
+  type GithubSyncConfig,
+} from '../shell/githubSyncStorage'
+
+const DEFAULT_SYNC_PATH = 'data/sync.json'
 
 export function DataView() {
   const atlas = useAtlas()
@@ -21,6 +31,18 @@ export function DataView() {
   const [seeding, setSeeding] = useState(false)
   const csvInputRef = useRef<HTMLInputElement>(null)
   const [csv, setCsv] = useState<CsvImportResult | null>(null)
+
+  // GitHub 동기화(v30) — 저장된 설정이 있으면 그대로 폼에 채운다. 토큰까지
+  // 포함해 이 기기의 localStorage에만 있고, IndexedDB 백업 봉투에는 안 실린다
+  // (core/githubSyncStorage.ts 주석 참고).
+  const savedSyncConfig = getSyncConfig()
+  const [syncOwner, setSyncOwner] = useState(savedSyncConfig?.owner ?? '')
+  const [syncRepo, setSyncRepo] = useState(savedSyncConfig?.repo ?? '')
+  const [syncPath, setSyncPath] = useState(savedSyncConfig?.path ?? DEFAULT_SYNC_PATH)
+  const [syncToken, setSyncToken] = useState(savedSyncConfig?.token ?? '')
+  const [syncing, setSyncing] = useState(false)
+  const [syncError, setSyncError] = useState<string | null>(null)
+  const [lastSyncedAt, setLastSyncedAtState] = useState(getLastSyncedAt())
 
   async function handleExport() {
     const snapshot = await db.exportAll()
@@ -89,6 +111,52 @@ export function DataView() {
     setImporting(false)
   }
 
+  /**
+   * GitHub 동기화(v30) — "받아서 병합 → 합친 전체를 다시 올림" 한 번으로 끝낸다.
+   * 진짜 실시간은 아니고 이 버튼을 누른 순간에만 일어난다(git 기반이라 그게
+   * 한계이자 설계다). 병합은 새로 만들지 않고 기존 가져오기(merge) 경로를 그대로
+   * 태운다 — id 기반 put이라 두 기기 로그가 안전하게 합쳐진다(core/githubSync.ts
+   * 주석 참고).
+   */
+  async function handleSync() {
+    const config: GithubSyncConfig = {
+      owner: syncOwner.trim(),
+      repo: syncRepo.trim(),
+      path: syncPath.trim() || DEFAULT_SYNC_PATH,
+      token: syncToken.trim(),
+    }
+    if (!config.owner || !config.repo || !config.token) {
+      setSyncError('owner·repo·토큰을 모두 입력하세요.')
+      return
+    }
+    setSyncing(true)
+    setSyncError(null)
+    try {
+      await checkRepoAccess(config)
+      const remote = await fetchRemoteFile(config)
+      if (remote) {
+        const parsed = parseBackup(remote.text)
+        if (!parsed.ok) throw new Error(`원격 파일이 이 앱의 백업 형식이 아닙니다: ${parsed.error}`)
+        await atlas.importBackup(parsed.snapshot, 'merge')
+      }
+      const merged = await db.exportAll()
+      await putRemoteFile(
+        config,
+        serializeBackup(merged),
+        remote?.sha ?? null,
+        `sync: ${new Date().toISOString()}`,
+      )
+      setSyncConfig(config)
+      const now = new Date().toISOString()
+      setLastSyncedAt(now)
+      setLastSyncedAtState(now)
+    } catch (e) {
+      setSyncError(e instanceof Error ? e.message : String(e))
+    } finally {
+      setSyncing(false)
+    }
+  }
+
   return (
     <section className="panel backup">
       <h2>데이터</h2>
@@ -113,6 +181,52 @@ export function DataView() {
       </div>
 
       {error && <p className="error-text">{error}</p>}
+
+      <div className="sync-block">
+        <h3>GitHub 동기화</h3>
+        <p className="muted">
+          GitHub 저장소의 파일 하나를 다른 기기와 주고받는 창구로 씁니다. 진짜 실시간은
+          아니고, 아래 버튼을 누른 순간에만 동기화됩니다 — 받은 내용은 지금 데이터와
+          병합(id가 같으면 원격이 이김)한 뒤, 합친 전체를 다시 올립니다.
+        </p>
+        <p className="muted sync-token-note">
+          토큰은 이 브라우저에만 저장되고 백업 파일에는 포함되지 않습니다. 저장소 하나만
+          건드릴 수 있는 fine-grained 토큰(Contents: Read and write)을 권장합니다.
+        </p>
+        <div className="sync-form">
+          <label>
+            Owner
+            <input value={syncOwner} onChange={(e) => setSyncOwner(e.target.value)} placeholder="miel4ru-web" />
+          </label>
+          <label>
+            Repo
+            <input value={syncRepo} onChange={(e) => setSyncRepo(e.target.value)} placeholder="learning-atlas" />
+          </label>
+          <label>
+            경로
+            <input value={syncPath} onChange={(e) => setSyncPath(e.target.value)} placeholder={DEFAULT_SYNC_PATH} />
+          </label>
+          <label>
+            토큰
+            <input
+              type="password"
+              value={syncToken}
+              onChange={(e) => setSyncToken(e.target.value)}
+              placeholder="github_pat_…"
+              autoComplete="off"
+            />
+          </label>
+        </div>
+        <div className="backup-actions">
+          <button className="start" onClick={handleSync} disabled={syncing}>
+            {syncing ? '동기화 중…' : '지금 동기화'}
+          </button>
+        </div>
+        {syncError && <p className="error-text">{syncError}</p>}
+        {lastSyncedAt && !syncError && (
+          <p className="muted">마지막 동기화: {new Date(lastSyncedAt).toLocaleString()}</p>
+        )}
+      </div>
 
       <div className="csv-block">
         <h3>CSV로 카드 여러 장 넣기</h3>

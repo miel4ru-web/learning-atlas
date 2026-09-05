@@ -75,7 +75,7 @@ export function useForegroundReminder(atlas: ReminderAtlas): void {
       const notification = new Notification('복습할 카드가 있어요', {
         body: `${dueCount}장 대기 중입니다`,
         tag: 'learning-atlas-due',
-        icon: '/icons/icon-192.png',
+        icon: `${import.meta.env.BASE_URL}icons/icon-192.png`,
       })
       notification.onclick = () => {
         window.focus()
