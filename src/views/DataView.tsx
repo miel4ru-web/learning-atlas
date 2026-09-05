@@ -7,6 +7,7 @@ import { useAtlas } from '../core/atlas'
 import * as db from '../core/db'
 import { serializeBackup, parseBackup, backupFilename, type BackupSummary } from '../core/backup'
 import { seedDeck, SEED_DECK_SIZE } from '../core/seedDeck'
+import { buildCsvImport, type CsvImportResult } from '../core/csvImport'
 
 export function DataView() {
   const atlas = useAtlas()
@@ -18,6 +19,8 @@ export function DataView() {
   const [error, setError] = useState<string | null>(null)
   const [importing, setImporting] = useState(false)
   const [seeding, setSeeding] = useState(false)
+  const csvInputRef = useRef<HTMLInputElement>(null)
+  const [csv, setCsv] = useState<CsvImportResult | null>(null)
 
   async function handleExport() {
     const snapshot = await db.exportAll()
@@ -48,6 +51,32 @@ export function DataView() {
     setSeeding(true)
     await atlas.importBackup(seedDeck(), 'merge')
     setSeeding(false)
+  }
+
+  async function handleCsvPicked(e: ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file) return
+    setCsv(buildCsvImport(await file.text(), atlas.kcs))
+  }
+
+  // 저장은 백업 가져오기(merge)를 그대로 쓴다 — 새 DB 코드 없이, KC와 카드가
+  // 한 트랜잭션에 함께 들어간다. 채점 로그는 건드리지 않는다.
+  async function handleConfirmCsv() {
+    if (!csv || csv.items.length === 0) return
+    setImporting(true)
+    await atlas.importBackup(
+      {
+        items: csv.items,
+        interactions: [],
+        kcs: csv.newKcs,
+        schedulerSettings: null,
+        studyPrefs: null,
+      },
+      'merge',
+    )
+    setCsv(null)
+    setImporting(false)
   }
 
   async function handleConfirmImport() {
@@ -83,6 +112,66 @@ export function DataView() {
       </div>
 
       {error && <p className="error-text">{error}</p>}
+
+      <div className="csv-block">
+        <h3>CSV로 카드 여러 장 넣기</h3>
+        <p className="muted">
+          첫 줄에 열 이름을 적습니다. 가장 단순하게는 <code>front,back</code>(또는{' '}
+          <code>앞면,뒷면</code>)이면 되고, <code>kc</code>(분류) 열을 더하면 그 이름의 분류에
+          붙습니다 — 없는 분류는 새로 만듭니다. <code>text</code>에 <code>{'{{정답}}'}</code>을
+          쓰면 빈칸 카드, <code>prompt</code>와 <code>answers</code>(여러 개는 <code>|</code>로
+          구분)를 쓰면 단답형이 됩니다. 채점 로그는 건드리지 않습니다.
+        </p>
+        <div className="backup-actions">
+          <button className="reveal" onClick={() => csvInputRef.current?.click()}>
+            CSV 파일 선택…
+          </button>
+          <input
+            ref={csvInputRef}
+            type="file"
+            accept="text/csv,.csv,.txt"
+            hidden
+            onChange={handleCsvPicked}
+          />
+        </div>
+
+        {csv && (
+          <div className="import-preview">
+            <p>
+              가져올 카드 <strong>{csv.items.length}</strong>장
+              {csv.newKcs.length > 0 && <> · 새 분류 {csv.newKcs.length}개</>}
+              {csv.errors.length > 0 && (
+                <> · <span className="error-text">건너뛴 줄 {csv.errors.length}</span></>
+              )}
+            </p>
+            {csv.newKcs.length > 0 && (
+              <p className="muted">새로 만들 분류: {csv.newKcs.map((k) => k.name).join(', ')}</p>
+            )}
+            {csv.errors.length > 0 && (
+              <ul className="csv-errors">
+                {csv.errors.slice(0, 5).map((err) => (
+                  <li key={err.line}>
+                    {err.line}번째 줄 — {err.message}
+                  </li>
+                ))}
+                {csv.errors.length > 5 && <li className="muted">…외 {csv.errors.length - 5}줄</li>}
+              </ul>
+            )}
+            <div className="backup-actions">
+              <button
+                className="start"
+                onClick={handleConfirmCsv}
+                disabled={importing || csv.items.length === 0}
+              >
+                {importing ? '가져오는 중…' : `${csv.items.length}장 가져오기`}
+              </button>
+              <button className="reveal" onClick={() => setCsv(null)} disabled={importing}>
+                취소
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
 
       <div className="seed-deck-block">
         <p className="muted">
