@@ -147,6 +147,8 @@ export interface Interaction {
   selectedIndex?: number
   /** 채점 당시 활성 스케줄러 파라미터 식별자 — 재적합 설정의 fittedAt, 기본값이면 'default'. */
   policyVersion?: string
+  /** 어느 학습 세션에서 나온 채점인가(v27). 세션 밖에서 채점될 일은 아직 없지만 optional이다. */
+  sessionId?: string
   /**
    * 사전 테스트(Atlas 1부 "배우기 전에 틀려 보기", v23)로 낸 문항이었는가.
    * true면 로그에는 남되 파생 학습 상태(FSRS·Elo·캘리브레이션·문항 품질)에서는
@@ -165,6 +167,32 @@ export interface InteractionSignals {
   response?: string
   selectedIndex?: number
   pretest?: boolean
+  sessionId?: string
+}
+
+/**
+ * 한 번의 학습 세션(Atlas 4.7 `session(id, started_at, budget_min, policy_version)`).
+ *
+ * 이건 파생 상태가 아니라 사건 기록이라 저장한다 — "그때 무엇을 내주기로 했는가"는
+ * 로그를 재생해도 복원되지 않는다(그 순간의 만기·숙달도·예산이 다 지나갔다).
+ * 덕분에 두 가지가 된다: 새로고침해도 하던 세션을 이어서 하기, 그리고 "20분을
+ * 달라 했는데 실제로 몇 장을 했나"를 나중에 보기(3.1 부하 평준화 튜닝의 근거).
+ *
+ * 진행 상황(어디까지 했나)은 여기 저장하지 않는다. 그건 채점 로그에서 나온다 —
+ * sessionId가 붙은 Interaction을 보면 되므로, 따로 들고 있다가 어긋날 여지를 만들지 않는다.
+ */
+export interface StudySession {
+  id: string
+  startedAt: string // ISO-8601
+  /** 끝낸 시각. null이면 아직 진행 중(이어서 하기 대상). */
+  endedAt: string | null
+  budgetMinutes: number
+  /** 시작 당시 활성 스케줄러 파라미터 식별자(Interaction.policyVersion과 같은 값). */
+  policyVersion: string
+  /** 시작할 때 고정한 카드 순서(4.4 "그 순간의 순서를 고정한다"). */
+  plannedItemIds: string[]
+  /** 맨 앞에 붙인 사전 테스트 카드(v23). 없으면 null. */
+  pretestItemId: string | null
 }
 
 /** Interaction 로그를 재생해 얻는 FSRS 파생 상태. DB에 저장하지 않는다. */

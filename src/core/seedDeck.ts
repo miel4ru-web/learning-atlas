@@ -203,6 +203,7 @@ export function seedDeck(): DbSnapshot {
     kcs,
     schedulerSettings: null,
     studyPrefs: null,
+    sessions: [],
   }
 }
 

@@ -15,6 +15,7 @@ import type {
   KnowledgeComponent,
   SchedulerSettings,
   StudyPrefs,
+  StudySession,
 } from './types'
 
 interface AtlasDB extends DBSchema {
@@ -35,6 +36,10 @@ interface AtlasDB extends DBSchema {
     key: string
     value: SchedulerSettings | StudyPrefs
   }
+  sessions: {
+    key: string
+    value: StudySession
+  }
 }
 
 const SCHEDULER_SETTINGS_KEY = 'scheduler'
@@ -42,7 +47,7 @@ const STUDY_PREFS_KEY = 'studyPrefs'
 
 // 현재 IndexedDB 스키마 버전. 백업 파일에도 같이 적어(core/backup.ts) 다른
 // 버전에서 만든 파일을 가져오려 할 때 걸러낸다.
-export const DB_VERSION = 5
+export const DB_VERSION = 6
 
 let dbPromise: Promise<IDBPDatabase<AtlasDB>> | null = null
 
@@ -83,6 +88,12 @@ function getDB() {
           // KnowledgeComponent에 optional requestRetention 추가(Atlas 5부). 스토어
           // 구조는 그대로 — 기존 KC 레코드는 필드 없이 남고, 읽는 쪽에서 전역
           // 기본값으로 폴백한다. 마이그레이션할 데이터가 없어 버전 표식만 올린다.
+        }
+        if (oldVersion < 6) {
+          // v27: 학습 세션 기록(Atlas 4.7 session). 과거 채점 로그에는 sessionId가
+          // 없지만 그대로 둔다 — 세션 요약은 sessionId가 붙은 것만 세면 되고,
+          // 없는 로그도 다른 집계에서는 여전히 온전한 기록이다.
+          db.createObjectStore('sessions', { keyPath: 'id' })
         }
       },
     })
@@ -184,6 +195,7 @@ export async function recordInteraction(
   if (signals.selectedIndex !== undefined) interaction.selectedIndex = signals.selectedIndex
   if (signals.policyVersion !== undefined) interaction.policyVersion = signals.policyVersion
   if (signals.pretest) interaction.pretest = true // false는 굳이 남기지 않는다(기본값)
+  if (signals.sessionId !== undefined) interaction.sessionId = signals.sessionId
 
   const db = await getDB()
   await db.add('interactions', interaction)
@@ -270,6 +282,33 @@ export async function clearSchedulerSettings(): Promise<void> {
   await db.delete('settings', SCHEDULER_SETTINGS_KEY)
 }
 
+// ---- 학습 세션(v27) ----
+// 시작할 때 한 번 쓰고, 끝날 때 endedAt만 채운다. 진행 상황은 여기 두지 않는다
+// (채점 로그의 sessionId에서 나온다 — types.ts StudySession 주석 참고).
+
+export async function startSession(
+  session: Omit<StudySession, 'id' | 'endedAt'>,
+): Promise<StudySession> {
+  const record: StudySession = { ...session, id: newId(), endedAt: null }
+  const db = await getDB()
+  await db.add('sessions', record)
+  return record
+}
+
+export async function endSession(sessionId: string, endedAt: string): Promise<void> {
+  const db = await getDB()
+  const tx = db.transaction('sessions', 'readwrite')
+  const store = tx.objectStore('sessions')
+  const found = await store.get(sessionId)
+  if (found && found.endedAt === null) await store.put({ ...found, endedAt })
+  await tx.done
+}
+
+export async function getAllSessions(): Promise<StudySession[]> {
+  const db = await getDB()
+  return db.getAll('sessions')
+}
+
 export async function getStudyPrefs(): Promise<StudyPrefs | undefined> {
   const db = await getDB()
   const v = await db.get('settings', STUDY_PREFS_KEY)
@@ -302,13 +341,15 @@ export interface DbSnapshot {
   kcs: KnowledgeComponent[]
   schedulerSettings: SchedulerSettings | null
   studyPrefs: StudyPrefs | null
+  /** v27. 구버전 백업에는 없으므로 읽는 쪽은 빈 배열로 폴백한다. */
+  sessions: StudySession[]
 }
 
 export type ImportMode = 'replace' | 'merge'
 
 export async function exportAll(): Promise<DbSnapshot> {
   const db = await getDB()
-  const tx = db.transaction(['items', 'interactions', 'kcs', 'settings'], 'readonly')
+  const tx = db.transaction(['items', 'interactions', 'kcs', 'settings', 'sessions'], 'readonly')
   // deleteItem과 같은 방식 — idb 프로미스만 순차 await 한다(그 사이 다른 걸
   // await 하면 트랜잭션이 조기 종료된다).
   const items = await tx.objectStore('items').getAll()
@@ -316,6 +357,7 @@ export async function exportAll(): Promise<DbSnapshot> {
   const kcs = await tx.objectStore('kcs').getAll()
   const schedulerSettings = await tx.objectStore('settings').get(SCHEDULER_SETTINGS_KEY)
   const studyPrefs = await tx.objectStore('settings').get(STUDY_PREFS_KEY)
+  const sessions = await tx.objectStore('sessions').getAll()
   await tx.done
   return {
     items,
@@ -323,6 +365,7 @@ export async function exportAll(): Promise<DbSnapshot> {
     kcs,
     schedulerSettings: (schedulerSettings as SchedulerSettings) ?? null,
     studyPrefs: (studyPrefs as StudyPrefs) ?? null,
+    sessions,
   }
 }
 
@@ -334,22 +377,25 @@ export async function exportAll(): Promise<DbSnapshot> {
  */
 export async function importAll(snapshot: DbSnapshot, mode: ImportMode): Promise<void> {
   const db = await getDB()
-  const tx = db.transaction(['items', 'interactions', 'kcs', 'settings'], 'readwrite')
+  const tx = db.transaction(['items', 'interactions', 'kcs', 'settings', 'sessions'], 'readwrite')
   const items = tx.objectStore('items')
   const interactions = tx.objectStore('interactions')
   const kcs = tx.objectStore('kcs')
   const settings = tx.objectStore('settings')
+  const sessions = tx.objectStore('sessions')
 
   if (mode === 'replace') {
     await items.clear()
     await interactions.clear()
     await kcs.clear()
     await settings.clear()
+    await sessions.clear()
   }
 
   for (const it of snapshot.items) await items.put(it)
   for (const it of snapshot.interactions) await interactions.put(it)
   for (const kc of snapshot.kcs) await kcs.put(kc)
+  for (const s of snapshot.sessions ?? []) await sessions.put(s)
   if (snapshot.schedulerSettings) {
     await settings.put(snapshot.schedulerSettings, SCHEDULER_SETTINGS_KEY)
   }

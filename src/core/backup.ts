@@ -15,6 +15,7 @@ import type {
   KnowledgeComponent,
   SchedulerSettings,
   StudyPrefs,
+  StudySession,
 } from './types'
 
 export const BACKUP_FORMAT = 'learning-atlas-backup'
@@ -164,6 +165,20 @@ function isSchedulerSettings(v: unknown): v is SchedulerSettings {
   )
 }
 
+function isStudySession(v: unknown): v is StudySession {
+  return (
+    isObject(v) &&
+    typeof v.id === 'string' &&
+    typeof v.startedAt === 'string' &&
+    (v.endedAt === null || typeof v.endedAt === 'string') &&
+    typeof v.budgetMinutes === 'number' &&
+    typeof v.policyVersion === 'string' &&
+    Array.isArray(v.plannedItemIds) &&
+    v.plannedItemIds.every((id) => typeof id === 'string') &&
+    (v.pretestItemId === null || typeof v.pretestItemId === 'string')
+  )
+}
+
 function isStudyPrefs(v: unknown): v is StudyPrefs {
   return (
     isObject(v) &&
@@ -220,6 +235,11 @@ export function parseBackup(text: string): ParseResult {
   if (studyPrefs != null && !isStudyPrefs(studyPrefs)) {
     return { ok: false, error: '백로그·휴가 모드 설정(studyPrefs)의 형태가 올바르지 않습니다.' }
   }
+  // v27 이전 백업에는 sessions가 아예 없다 — 없으면 빈 배열로 받아들인다.
+  const sessions = data.sessions ?? []
+  if (!Array.isArray(sessions) || !sessions.every(isStudySession)) {
+    return { ok: false, error: '학습 세션(sessions) 중 형태가 깨진 레코드가 있습니다.' }
+  }
 
   // 참조 무결성: 로그가 가리키는 itemId가 카드 목록에 있어야 재생이 성립한다.
   const itemIds = new Set(data.items.map((it) => it.id))
@@ -233,6 +253,7 @@ export function parseBackup(text: string): ParseResult {
     kcs: data.kcs,
     schedulerSettings: (settings as SchedulerSettings | null | undefined) ?? null,
     studyPrefs: (studyPrefs as StudyPrefs | null | undefined) ?? null,
+    sessions: sessions as StudySession[],
   }
   return {
     ok: true,

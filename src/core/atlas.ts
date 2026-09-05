@@ -21,6 +21,7 @@ import type {
   NewItem,
   SchedulerSettings,
   StudyPrefs,
+  StudySession,
 } from './types'
 import type { CalibrationBucket } from './calibration'
 import type { OptimizeResult } from '../scheduler/optimizer'
@@ -52,6 +53,8 @@ export interface AtlasData {
   kcById: ReadonlyMap<string, KnowledgeComponent>
   /** 사전 테스트(v23)로 이미 낸 적 있는 아이템 — 같은 카드를 반복해 내지 않으려고 본다. */
   pretestedIds: ReadonlySet<string>
+  /** 학습 세션 기록(v27). 최신순 정렬은 하지 않는다 — 쓰는 쪽에서 정한다. */
+  sessions: StudySession[]
 
   // ---- 세션 범위(휘발성 UI 상태 — DB에 저장하지 않는다, 새로고침하면 사라짐) ----
   // "카드" 화면의 덱 필터 결과로 학습 세션을 시작할 때만 쓴다. null이면 평소처럼
@@ -71,6 +74,9 @@ export interface AtlasData {
   bulkSetKc: (itemIds: readonly string[], kcId: string | null) => Promise<void>
   bulkDeleteItems: (itemIds: readonly string[]) => Promise<void>
   saveStudyPrefs: (prefs: StudyPrefs) => Promise<void>
+  /** 세션 시작 기록 — 만들어진 레코드를 돌려준다(화면이 sessionId를 들고 채점에 붙인다). */
+  startStudySession: (session: Omit<StudySession, 'id' | 'endedAt'>) => Promise<StudySession>
+  endStudySession: (sessionId: string) => Promise<void>
   /** signals는 활동 UI가 만들어 주는 부가 신호(v19) — 정책 버전은 여기서 붙인다. */
   recordInteraction: (
     itemId: string,

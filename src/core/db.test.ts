@@ -13,6 +13,7 @@ const EMPTY: DbSnapshot = {
   kcs: [],
   schedulerSettings: null,
   studyPrefs: null,
+  sessions: [],
 }
 
 beforeEach(async () => {
@@ -166,6 +167,7 @@ describe('KC 삭제', () => {
         ],
         schedulerSettings: null,
         studyPrefs: null,
+        sessions: [],
       },
       'replace',
     )
@@ -191,6 +193,7 @@ describe('exportAll / importAll', () => {
     kcs: [kc({ id: 'k1' })],
     schedulerSettings: null,
     studyPrefs: null,
+    sessions: [],
   }
 
   it('replace로 넣은 뒤 export하면 그대로 나온다', async () => {
@@ -234,6 +237,60 @@ describe('exportAll / importAll', () => {
     await db.importAll({ ...EMPTY, studyPrefs: prefs }, 'replace')
     expect(await db.getStudyPrefs()).toEqual(prefs)
     expect((await db.exportAll()).studyPrefs).toEqual(prefs)
+  })
+})
+
+describe('학습 세션(v27)', () => {
+  it('시작하면 진행 중(endedAt null)으로 저장되고, 끝내면 시각이 찍힌다', async () => {
+    const created = await db.startSession({
+      startedAt: '2026-01-01T09:00:00.000Z',
+      budgetMinutes: 20,
+      policyVersion: 'default',
+      plannedItemIds: ['a', 'b'],
+      pretestItemId: null,
+    })
+    expect(created.endedAt).toBeNull()
+    expect((await db.getAllSessions())[0]).toMatchObject({ id: created.id, endedAt: null })
+
+    await db.endSession(created.id, '2026-01-01T09:20:00.000Z')
+    expect((await db.getAllSessions())[0].endedAt).toBe('2026-01-01T09:20:00.000Z')
+  })
+
+  it('이미 끝난 세션은 다시 끝내도 처음 시각이 유지된다', async () => {
+    const created = await db.startSession({
+      startedAt: '2026-01-01T09:00:00.000Z',
+      budgetMinutes: 10,
+      policyVersion: 'default',
+      plannedItemIds: [],
+      pretestItemId: null,
+    })
+    await db.endSession(created.id, '2026-01-01T09:10:00.000Z')
+    await db.endSession(created.id, '2026-01-01T23:59:00.000Z')
+    expect((await db.getAllSessions())[0].endedAt).toBe('2026-01-01T09:10:00.000Z')
+  })
+
+  it('백업 왕복', async () => {
+    const created = await db.startSession({
+      startedAt: '2026-01-01T09:00:00.000Z',
+      budgetMinutes: 15,
+      policyVersion: 'default',
+      plannedItemIds: ['x'],
+      pretestItemId: 'x',
+    })
+    const out = await db.exportAll()
+    expect(out.sessions).toEqual([created])
+
+    await db.importAll(EMPTY, 'replace')
+    expect(await db.getAllSessions()).toEqual([])
+
+    await db.importAll({ ...EMPTY, sessions: [created] }, 'replace')
+    expect(await db.getAllSessions()).toEqual([created])
+  })
+
+  it('채점 로그에 sessionId가 함께 남는다', async () => {
+    const item = await db.addItem({ type: 'flashcard', front: 'Q', back: 'A', kcId: null })
+    await db.recordInteraction(item.id, 'good', null, null, { sessionId: 'sess-1' })
+    expect((await db.getInteractionsForItem(item.id))[0].sessionId).toBe('sess-1')
   })
 })
 

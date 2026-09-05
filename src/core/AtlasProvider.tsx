@@ -37,23 +37,26 @@ export function AtlasProvider({ children }: { children: ReactNode }) {
   const [kcs, setKcs] = useState<db.DbSnapshot['kcs']>([])
   const [schedulerSettings, setSchedulerSettings] = useState<db.DbSnapshot['schedulerSettings']>(null)
   const [studyPrefs, setStudyPrefs] = useState<db.DbSnapshot['studyPrefs']>(null)
+  const [sessions, setSessions] = useState<db.DbSnapshot['sessions']>([])
   const [loading, setLoading] = useState(true)
   const [now, setNow] = useState(() => new Date())
   const [sessionScopeItemIds, setSessionScopeItemIds] = useState<ReadonlySet<string> | null>(null)
 
   const reload = useCallback(async () => {
-    const [allItems, allInteractions, allKcs, settings, prefs] = await Promise.all([
+    const [allItems, allInteractions, allKcs, settings, prefs, allSessions] = await Promise.all([
       db.getAllItems(),
       db.getAllInteractions(),
       db.getAllKCs(),
       db.getSchedulerSettings(),
       db.getStudyPrefs(),
+      db.getAllSessions(),
     ])
     setItems(allItems)
     setInteractions(allInteractions)
     setKcs(allKcs)
     setSchedulerSettings(settings ?? null)
     setStudyPrefs(prefs ?? null)
+    setSessions(allSessions)
     setLoading(false)
     setNow(new Date())
   }, [])
@@ -218,6 +221,21 @@ export function AtlasProvider({ children }: { children: ReactNode }) {
     },
     [reload],
   )
+  const startStudySession = useCallback<AtlasData['startStudySession']>(
+    async (session) => {
+      const created = await db.startSession(session)
+      await reload()
+      return created
+    },
+    [reload],
+  )
+  const endStudySession = useCallback<AtlasData['endStudySession']>(
+    async (sessionId) => {
+      await db.endSession(sessionId, new Date().toISOString())
+      await reload()
+    },
+    [reload],
+  )
   // 정책 버전(v19)은 화면이 알 필요가 없다 — 지금 활성인 재적합 설정을 들고 있는
   // 여기서 붙인다. 재적합을 적용/해제한 시점 전후를 나중에 로그만으로 가를 수 있다(3.6).
   const recordInteraction = useCallback<AtlasData['recordInteraction']>(
@@ -277,6 +295,7 @@ export function AtlasProvider({ children }: { children: ReactNode }) {
       dueCount,
       kcById,
       pretestedIds,
+      sessions,
       sessionScopeItemIds,
       setSessionScope,
       clearSessionScope,
@@ -290,6 +309,8 @@ export function AtlasProvider({ children }: { children: ReactNode }) {
       bulkSetKc,
       bulkDeleteItems,
       saveStudyPrefs,
+      startStudySession,
+      endStudySession,
       recordInteraction,
       applyRefit,
       resetScheduler,
@@ -316,6 +337,7 @@ export function AtlasProvider({ children }: { children: ReactNode }) {
       dueCount,
       kcById,
       pretestedIds,
+      sessions,
       sessionScopeItemIds,
       setSessionScope,
       clearSessionScope,
@@ -329,6 +351,8 @@ export function AtlasProvider({ children }: { children: ReactNode }) {
       bulkSetKc,
       bulkDeleteItems,
       saveStudyPrefs,
+      startStudySession,
+      endStudySession,
       recordInteraction,
       applyRefit,
       resetScheduler,

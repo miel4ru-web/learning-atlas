@@ -301,6 +301,34 @@
   border: 1px dashed var(--hard);
   color: var(--hard);
 }
+.session-log ul { list-style: none; margin: 10px 0 0; padding: 0; }
+.session-log li {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.88rem;
+}
+.session-log li:last-child { border-bottom: 0; }
+.session-when { color: var(--text-muted); font-variant-numeric: tabular-nums; }
+.session-count { font-weight: 500; font-variant-numeric: tabular-nums; margin-left: auto; }
+.session-open {
+  font-size: 0.72rem;
+  padding: 1px 7px;
+  border-radius: 999px;
+  border: 1px solid var(--accent);
+  color: var(--accent);
+}
+.resume-note {
+  display: grid;
+  gap: 8px;
+  justify-items: center;
+  padding: 12px 14px;
+  border: 1px dashed var(--accent);
+  border-radius: 8px;
+}
+.resume-note p { font-size: 0.85rem; margin: 0; }
 .empty-start { display: grid; gap: 10px; justify-items: center; }
 .seed-note { font-size: 0.8rem; max-width: 34ch; line-height: 1.5; }
 .csv-block {

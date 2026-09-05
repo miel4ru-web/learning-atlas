@@ -72,6 +72,7 @@ export function DataView() {
         kcs: csv.newKcs,
         schedulerSettings: null,
         studyPrefs: null,
+        sessions: [],
       },
       'merge',
     )

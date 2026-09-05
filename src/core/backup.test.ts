@@ -13,6 +13,7 @@ function snapshot(): DbSnapshot {
     kcs: [kc({ id: 'kc-1', requestRetention: 0.95 })],
     schedulerSettings: null,
     studyPrefs: null,
+    sessions: [],
   }
 }
 

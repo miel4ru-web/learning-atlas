@@ -3,8 +3,16 @@
 // 화면의 로컬 상태다 — 채점할 때마다 전역은 reload 되지만 순서는 고정 유지.
 
 import { useState } from 'react'
-import type { Confidence, ErrorTag, Grade, InteractionSignals, Item } from '../core/types'
+import type {
+  Confidence,
+  ErrorTag,
+  Grade,
+  InteractionSignals,
+  Item,
+  StudySession,
+} from '../core/types'
 import { useAtlas } from '../core/atlas'
+import { openSession, resumeIndex } from '../core/sessions'
 import { buildSession, pickPretestItem } from '../scheduler/session'
 import { seedDeck, SEED_DECK_SIZE } from '../core/seedDeck'
 import { RespondPanel } from '../activities/RespondPanel'
@@ -19,6 +27,10 @@ export function StudyView() {
   const [budgetInput, setBudgetInput] = useState(String(DEFAULT_BUDGET_MIN))
   const [seeding, setSeeding] = useState(false)
   const [pretestItemId, setPretestItemId] = useState<string | null>(null)
+  const [sessionId, setSessionId] = useState<string | null>(null)
+
+  // 새로고침·탭 이동으로 끊긴 세션(v27). 화면에 세션이 안 떠 있을 때만 물어본다.
+  const resumable = sessionPlan === null ? openSession(atlas.sessions) : null
 
   // "카드" 화면 덱 필터에서 "이 카드로 학습 시작"을 눌렀으면 sessionScopeItemIds가
   // 차 있다 — buildSession의 후보 풀을 그 카드들로만 좁힌다. 세션 편성 로직
@@ -53,7 +65,7 @@ export function StudyView() {
     setSeeding(false)
   }
 
-  function startSession() {
+  async function startSession() {
     const minutes = Math.max(1, Number(budgetInput) || DEFAULT_BUDGET_MIN)
     const plan = buildSession(scopedPool, atlas.cardStates, atlas.eloState, atlas.kcs, atlas.now, {
       budgetMinutes: minutes,
@@ -71,14 +83,50 @@ export function StudyView() {
         ? pickPretestItem(scopedPool, atlas.cardStates, atlas.eloState, atlas.kcs, atlas.pretestedIds)
         : null
 
-    setSessionPlan(pretest ? [pretest, ...plan] : plan)
+    const full = pretest ? [pretest, ...plan] : plan
+
+    // 새로 시작하기 전에 남아 있던 세션은 닫는다(중간에 창을 닫았던 경우).
+    if (resumable) await atlas.endStudySession(resumable.id)
+
+    // 세션 기록(v27) — 이 순서와 예산은 지금 이 순간의 상태에서만 나오는 값이라
+    // 로그 재생으로는 복원되지 않는다. 그래서 파생 상태와 달리 저장한다.
+    const record = await atlas.startStudySession({
+      startedAt: new Date().toISOString(),
+      budgetMinutes: minutes,
+      policyVersion: atlas.schedulerSettings?.fittedAt ?? 'default',
+      plannedItemIds: full.map((item) => item.id),
+      pretestItemId: pretest?.id ?? null,
+    })
+
+    setSessionId(record.id)
+    setSessionPlan(full)
     setPretestItemId(pretest?.id ?? null)
     setSessionIndex(0)
     setConfidence(null)
     atlas.clearSessionScope() // 한 번 쓰고 나면 다음 "오늘 학습 시작"은 다시 전체 풀로.
   }
 
-  function endSession() {
+  /**
+   * 중단된 세션 이어서 하기(v27). 계획된 순서를 그대로 되살리고, 어디까지 했는지는
+   * 채점 로그에서 계산한다 — 진행 상황을 따로 저장하지 않으니 어긋날 일이 없다.
+   * 그 사이 지워진 카드는 빠지므로 계획이 짧아질 수 있다.
+   */
+  function resumeSession(session: StudySession) {
+    const byId = new Map(atlas.items.map((item) => [item.id, item]))
+    const plan = session.plannedItemIds
+      .map((id) => byId.get(id))
+      .filter((item): item is Item => item !== undefined)
+
+    setSessionId(session.id)
+    setSessionPlan(plan)
+    setPretestItemId(session.pretestItemId)
+    setSessionIndex(Math.min(resumeIndex(session, atlas.interactions), plan.length))
+    setConfidence(null)
+  }
+
+  async function endSession() {
+    if (sessionId) await atlas.endStudySession(sessionId)
+    setSessionId(null)
     setSessionPlan(null)
     setSessionIndex(0)
     setConfidence(null)
@@ -96,6 +144,7 @@ export function StudyView() {
     await atlas.recordInteraction(current.id, grade, confidence, errorTag, {
       ...signals,
       pretest: current.id === pretestItemId,
+      ...(sessionId ? { sessionId } : {}),
     })
     setConfidence(null)
     setSessionIndex((i) => i + 1)
@@ -105,6 +154,18 @@ export function StudyView() {
     <section className="queue">
       {!sessionPlan ? (
         <div className="session-start">
+          {resumable && (
+            <div className="resume-note">
+              <p className="muted">
+                하던 세션이 남아 있습니다 —{' '}
+                {resumeIndex(resumable, atlas.interactions)}/{resumable.plannedItemIds.length}장 진행,{' '}
+                {new Date(resumable.startedAt).toLocaleString()} 시작
+              </p>
+              <button className="reveal" onClick={() => resumeSession(resumable)}>
+                이어서 하기
+              </button>
+            </div>
+          )}
           {scope && (
             <p className="session-scope-note muted">
               &quot;카드&quot; 필터 결과 {scope.size}장으로 시작합니다.{' '}
