@@ -1,7 +1,7 @@
 {
   "format": "learning-atlas-backup",
   "version": 1,
-  "exportedAt": "2026-09-06T12:00:34.761Z",
+  "exportedAt": "2026-09-06T12:17:46.999Z",
   "dbVersion": 6,
   "data": {
     "items": [
@@ -1152,6 +1152,17 @@
         "sessionId": "6a8cddbe-15d4-4e69-89b6-7171489c5d92"
       },
       {
+        "id": "446d5dbb-d7e0-45c4-93a6-584c6de192c2",
+        "itemId": "seed-i2",
+        "ts": "2026-09-05T12:46:36.913Z",
+        "grade": "easy",
+        "confidence": null,
+        "errorTag": null,
+        "latencyMs": 5512,
+        "policyVersion": "default",
+        "sessionId": "f9357399-122f-46ff-9ab2-e4629b0894a0"
+      },
+      {
         "id": "5158a7ee-7505-4a99-a1e7-07f2ef7bb6c0",
         "itemId": "seed-i1",
         "ts": "2026-09-05T10:42:37.699Z",
@@ -1173,6 +1184,56 @@
         "response": "",
         "policyVersion": "default",
         "sessionId": "6a8cddbe-15d4-4e69-89b6-7171489c5d92"
+      },
+      {
+        "id": "8351c9d4-7e9e-45ab-a2da-42e74f61cd7a",
+        "itemId": "seed-i4",
+        "ts": "2026-09-05T12:46:40.414Z",
+        "grade": "good",
+        "confidence": null,
+        "errorTag": null,
+        "latencyMs": 3493,
+        "response": "교재에 밑줄 긋기",
+        "selectedIndex": 0,
+        "policyVersion": "default",
+        "sessionId": "f9357399-122f-46ff-9ab2-e4629b0894a0"
+      },
+      {
+        "id": "8c76a376-1058-4709-b59d-27ee29a681be",
+        "itemId": "seed-i5",
+        "ts": "2026-09-05T12:46:48.809Z",
+        "grade": "good",
+        "confidence": null,
+        "errorTag": null,
+        "latencyMs": 8386,
+        "response": "분산 학습",
+        "policyVersion": "default",
+        "sessionId": "f9357399-122f-46ff-9ab2-e4629b0894a0"
+      },
+      {
+        "id": "b8f086bb-a404-4073-ad0c-0a677c7ec2c9",
+        "itemId": "seed-i12",
+        "ts": "2026-09-05T12:46:22.209Z",
+        "grade": "again",
+        "confidence": null,
+        "errorTag": "carelessness",
+        "latencyMs": 22786,
+        "response": "인출 학습",
+        "policyVersion": "default",
+        "pretest": true,
+        "sessionId": "f9357399-122f-46ff-9ab2-e4629b0894a0"
+      },
+      {
+        "id": "f0b59623-1ccc-4381-bcaf-15d62c5c8390",
+        "itemId": "seed-i3",
+        "ts": "2026-09-05T12:46:31.394Z",
+        "grade": "good",
+        "confidence": null,
+        "errorTag": null,
+        "latencyMs": 9167,
+        "response": "인출 학습",
+        "policyVersion": "default",
+        "sessionId": "f9357399-122f-46ff-9ab2-e4629b0894a0"
       },
       {
         "id": "f47224e3-054f-4110-b8cb-215d042c49d5",
@@ -1563,6 +1624,20 @@
         "endedAt": "2026-09-05T23:35:59.465Z"
       },
       {
+        "startedAt": "2026-09-06T12:15:45.858Z",
+        "budgetMinutes": 20,
+        "policyVersion": "default",
+        "plannedItemIds": [
+          "seed-i13",
+          "seed-i3",
+          "seed-i4",
+          "seed-i5"
+        ],
+        "pretestItemId": "seed-i13",
+        "id": "afa45848-c9ca-4a03-8a6b-e0a182826ace",
+        "endedAt": null
+      },
+      {
         "startedAt": "2026-09-05T12:07:39.306Z",
         "budgetMinutes": 20,
         "policyVersion": "default",
@@ -1612,6 +1687,21 @@
         "pretestItemId": null,
         "id": "eb608ee9-3484-4954-920d-b71aab303963",
         "endedAt": null
+      },
+      {
+        "startedAt": "2026-09-05T12:45:59.391Z",
+        "budgetMinutes": 20,
+        "policyVersion": "default",
+        "plannedItemIds": [
+          "seed-i12",
+          "seed-i3",
+          "seed-i2",
+          "seed-i4",
+          "seed-i5"
+        ],
+        "pretestItemId": "seed-i12",
+        "id": "f9357399-122f-46ff-9ab2-e4629b0894a0",
+        "endedAt": "2026-09-05T12:46:50.999Z"
       }
     ]
   }
