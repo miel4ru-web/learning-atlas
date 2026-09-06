@@ -1,10 +1,935 @@
 {
   "format": "learning-atlas-backup",
   "version": 1,
-  "exportedAt": "2026-09-05T12:39:04.324Z",
+  "exportedAt": "2026-09-06T12:00:34.761Z",
   "dbVersion": 6,
   "data": {
     "items": [
+      {
+        "id": "0218124f-87e9-4bbb-bc27-c152f7ec03bf",
+        "kcId": "3a8e18de-99fa-4dd1-acb3-5fd1dab30830",
+        "createdAt": "2026-09-06T11:54:18.140Z",
+        "type": "short",
+        "prompt": "우분투의 기반이 되는 배포판은?",
+        "acceptedAnswers": [
+          "데비안",
+          "Debian"
+        ]
+      },
+      {
+        "id": "02b8241a-9cf2-4c47-b612-11c27a5de8bd",
+        "kcId": "5dbac27d-a796-416f-9880-5e1d4094e9b5",
+        "createdAt": "2026-09-06T11:54:18.141Z",
+        "type": "short",
+        "prompt": "현재 열려 있는 네트워크 포트/소켓 상태를 확인하는 명령어는?",
+        "acceptedAnswers": [
+          "netstat",
+          "ss"
+        ]
+      },
+      {
+        "id": "04a98aaf-5729-42ae-a048-1cb013fd7274",
+        "kcId": "3a8e18de-99fa-4dd1-acb3-5fd1dab30830",
+        "createdAt": "2026-09-06T11:54:18.140Z",
+        "type": "flashcard",
+        "front": "GNU 프로젝트를 창시한 사람은?",
+        "back": "리처드 스톨먼(Richard Stallman)"
+      },
+      {
+        "id": "064386bf-f53e-4c1c-a4ac-70bc69256b05",
+        "kcId": "6c5da436-a0b1-43ac-8713-8b40553b7bda",
+        "createdAt": "2026-09-06T11:54:18.140Z",
+        "type": "flashcard",
+        "front": "파일 소유 그룹을 변경하는 명령어는?",
+        "back": "chgrp"
+      },
+      {
+        "id": "110d1ef6-8eb9-430e-be8d-c0824d285e2a",
+        "kcId": "51c8daf6-18df-4d25-bc65-63dbc124537e",
+        "createdAt": "2026-09-06T11:54:18.141Z",
+        "type": "short",
+        "prompt": "데비안 계열에서 저수준 패키지 설치 명령어는?",
+        "acceptedAnswers": [
+          "dpkg"
+        ]
+      },
+      {
+        "id": "1545f238-9eb0-446e-8a80-40a6ede23769",
+        "kcId": "6c5da436-a0b1-43ac-8713-8b40553b7bda",
+        "createdAt": "2026-09-06T11:54:18.141Z",
+        "type": "short",
+        "prompt": "암호화된 사용자 비밀번호가 저장된 시스템 파일은?",
+        "acceptedAnswers": [
+          "/etc/shadow"
+        ]
+      },
+      {
+        "id": "164c7313-ef89-4e47-b214-63293d1e4c72",
+        "kcId": "20235aac-c90e-4d27-881e-d3f593ab992c",
+        "createdAt": "2026-09-06T11:54:18.140Z",
+        "type": "short",
+        "prompt": "파일의 앞부분 일부만 출력하는 명령어는?",
+        "acceptedAnswers": [
+          "head"
+        ]
+      },
+      {
+        "id": "173f37c8-523c-4ba4-a706-fbb5bbee046f",
+        "kcId": "bf1b8697-0dc5-451f-8b03-18f4f956dc2e",
+        "createdAt": "2026-09-06T11:54:18.141Z",
+        "type": "short",
+        "prompt": "현재 실행 중인 프로세스 목록을 출력하는 명령어는?",
+        "acceptedAnswers": [
+          "ps"
+        ]
+      },
+      {
+        "id": "1798a02d-6429-4a3b-9f99-9f15da3a16a6",
+        "kcId": "51c8daf6-18df-4d25-bc65-63dbc124537e",
+        "createdAt": "2026-09-06T11:54:18.141Z",
+        "type": "short",
+        "prompt": "레드햇/CentOS 계열에서 의존성을 해결해 설치하는 고수준 명령어는?",
+        "acceptedAnswers": [
+          "yum",
+          "dnf"
+        ]
+      },
+      {
+        "id": "1c414c09-22e4-4d07-9aed-b6e97e795e90",
+        "kcId": "1dd88a1c-cd46-41ed-895f-8a5285d4377e",
+        "createdAt": "2026-09-06T11:54:18.141Z",
+        "type": "short",
+        "prompt": "파일 무결성이나 침입 탐지를 수행하는 도구의 대표 예는?",
+        "acceptedAnswers": [
+          "tripwire"
+        ]
+      },
+      {
+        "id": "1eda10af-5848-4be7-99a5-8fab553bf630",
+        "kcId": "20235aac-c90e-4d27-881e-d3f593ab992c",
+        "createdAt": "2026-09-06T11:54:18.140Z",
+        "type": "short",
+        "prompt": "파일을 이동하거나 이름을 변경하는 명령어는?",
+        "acceptedAnswers": [
+          "mv"
+        ]
+      },
+      {
+        "id": "21065320-384a-40b9-ae11-dbdf1ee17b66",
+        "kcId": "6c5da436-a0b1-43ac-8713-8b40553b7bda",
+        "createdAt": "2026-09-06T11:54:18.140Z",
+        "type": "flashcard",
+        "front": "파일 권한을 변경하는 명령어는?",
+        "back": "chmod"
+      },
+      {
+        "id": "2570141d-756c-4d15-9789-0cd7b4ea1477",
+        "kcId": "bf1b8697-0dc5-451f-8b03-18f4f956dc2e",
+        "createdAt": "2026-09-06T11:54:18.141Z",
+        "type": "short",
+        "prompt": "프로세스를 실시간으로 모니터링하는 명령어는?",
+        "acceptedAnswers": [
+          "top"
+        ]
+      },
+      {
+        "id": "291518c2-b870-41c5-8dfe-b82d9930008f",
+        "kcId": "20f8b073-fdd7-4ea2-9dfa-65d2d6a6d5c1",
+        "createdAt": "2026-09-06T11:54:18.140Z",
+        "type": "short",
+        "prompt": "현재 대부분의 리눅스 배포판에서 사용하는 초기화 시스템은?",
+        "acceptedAnswers": [
+          "systemd"
+        ]
+      },
+      {
+        "id": "2ec725f6-2764-41fb-9a6e-63de271db5d7",
+        "kcId": "1ea37166-a5ae-4c2a-b70d-311b1ff7f73f",
+        "createdAt": "2026-09-06T11:54:18.141Z",
+        "type": "flashcard",
+        "front": "리눅스에서 대표적인 DNS 서버 소프트웨어는?",
+        "back": "BIND"
+      },
+      {
+        "id": "32d3457b-6253-4174-9ad3-3b9256f46a6a",
+        "kcId": "bcf65657-5967-40b5-b1d0-06c440554387",
+        "createdAt": "2026-09-06T11:54:18.141Z",
+        "type": "short",
+        "prompt": "디스크 사용량(파일시스템별)을 확인하는 명령어는?",
+        "acceptedAnswers": [
+          "df"
+        ]
+      },
+      {
+        "id": "35f06805-cf89-489c-a45c-8f11380ee7ec",
+        "kcId": "1dd88a1c-cd46-41ed-895f-8a5285d4377e",
+        "createdAt": "2026-09-06T11:54:18.141Z",
+        "type": "short",
+        "prompt": "최근 리눅스 배포판의 기본 방화벽 관리 도구는?",
+        "acceptedAnswers": [
+          "firewalld"
+        ]
+      },
+      {
+        "id": "35fdf948-518e-418b-9e76-ae612a05d294",
+        "kcId": "d774294b-67ec-4859-8204-bf98eddefd1e",
+        "createdAt": "2026-09-06T11:54:18.140Z",
+        "type": "flashcard",
+        "front": "시스템 부팅에 필요한 커널과 부트로더 파일이 위치하는 디렉터리는?",
+        "back": "/boot"
+      },
+      {
+        "id": "3675e65f-9cfd-4d36-bf73-fe978a1371c9",
+        "kcId": "3a8e18de-99fa-4dd1-acb3-5fd1dab30830",
+        "createdAt": "2026-09-06T11:54:18.140Z",
+        "type": "short",
+        "prompt": "리눅스 커널의 라이선스는 무엇인가?",
+        "acceptedAnswers": [
+          "GPL",
+          "GPLv2",
+          "GNU GPL"
+        ]
+      },
+      {
+        "id": "39247adf-a6fd-4aea-88a6-30c74681bd8d",
+        "kcId": "6c5da436-a0b1-43ac-8713-8b40553b7bda",
+        "createdAt": "2026-09-06T11:54:18.140Z",
+        "type": "short",
+        "prompt": "소유자에게 읽기, 쓰기, 실행 권한을 모두 부여하는 8진수 값은?",
+        "acceptedAnswers": [
+          "7"
+        ]
+      },
+      {
+        "id": "3ab79fb3-9570-40e9-91e4-0b1be6348c06",
+        "kcId": "6c5da436-a0b1-43ac-8713-8b40553b7bda",
+        "createdAt": "2026-09-06T11:54:18.140Z",
+        "type": "flashcard",
+        "front": "파일 소유자를 변경하는 명령어는?",
+        "back": "chown"
+      },
+      {
+        "id": "3b6a9b5e-5e52-4cc8-a203-6c7cd6baaeb5",
+        "kcId": "1dd88a1c-cd46-41ed-895f-8a5285d4377e",
+        "createdAt": "2026-09-06T11:54:18.141Z",
+        "type": "flashcard",
+        "front": "강제 접근 통제(MAC)를 구현한 리눅스 보안 모듈은?",
+        "back": "SELinux"
+      },
+      {
+        "id": "411234b6-649f-4179-bae5-c5c7b9124884",
+        "kcId": "6c5da436-a0b1-43ac-8713-8b40553b7bda",
+        "createdAt": "2026-09-06T11:54:18.141Z",
+        "type": "short",
+        "prompt": "현재 사용자를 다른 사용자로 전환하는 명령어는?",
+        "acceptedAnswers": [
+          "su"
+        ]
+      },
+      {
+        "id": "43e761a5-6f3f-4450-8651-525ca2592ce7",
+        "kcId": "574a5092-bdc0-42b8-9d58-b8bc99522b0a",
+        "createdAt": "2026-09-06T11:54:18.141Z",
+        "type": "short",
+        "prompt": "bash 스크립트에서 실행 해석기를 지정하는 첫 줄은?",
+        "acceptedAnswers": [
+          "#!/bin/bash"
+        ]
+      },
+      {
+        "id": "446436d9-b7cd-457c-8c51-4f9762a6901d",
+        "kcId": "20235aac-c90e-4d27-881e-d3f593ab992c",
+        "createdAt": "2026-09-06T11:54:18.140Z",
+        "type": "short",
+        "prompt": "파일을 찾는 대표적 명령어(경로 기반 탐색)는?",
+        "acceptedAnswers": [
+          "find"
+        ]
+      },
+      {
+        "id": "458a687b-f983-477d-b326-031047775160",
+        "kcId": "20235aac-c90e-4d27-881e-d3f593ab992c",
+        "createdAt": "2026-09-06T11:54:18.140Z",
+        "type": "short",
+        "prompt": "디렉터리 목록을 상세히 출력하는 옵션은?",
+        "acceptedAnswers": [
+          "ls -l"
+        ]
+      },
+      {
+        "id": "482b8c6e-08a9-430d-83a4-22698bbf8a33",
+        "kcId": "20235aac-c90e-4d27-881e-d3f593ab992c",
+        "createdAt": "2026-09-06T11:54:18.140Z",
+        "type": "short",
+        "prompt": "로그 파일을 실시간으로 계속 추적하며 보는 tail 옵션은?",
+        "acceptedAnswers": [
+          "tail -f"
+        ]
+      },
+      {
+        "id": "49fba444-0e01-4ad4-a619-08ed727ce089",
+        "kcId": "20235aac-c90e-4d27-881e-d3f593ab992c",
+        "createdAt": "2026-09-06T11:54:18.140Z",
+        "type": "short",
+        "prompt": "파일을 삭제하는 명령어는?",
+        "acceptedAnswers": [
+          "rm"
+        ]
+      },
+      {
+        "id": "4a35a491-598b-4371-a7c8-0983795bb21e",
+        "kcId": "20f8b073-fdd7-4ea2-9dfa-65d2d6a6d5c1",
+        "createdAt": "2026-09-06T11:54:18.140Z",
+        "type": "cloze",
+        "text": "리눅스 부팅 시 커널이 최초로 실행하는 프로세스는 PID 1번인 {{init}} 또는 systemd이다"
+      },
+      {
+        "id": "4acb8d9e-74ee-47c4-9037-b17a92d7b8bb",
+        "kcId": "574a5092-bdc0-42b8-9d58-b8bc99522b0a",
+        "createdAt": "2026-09-06T11:54:18.141Z",
+        "type": "short",
+        "prompt": "환경 변수를 설정하는 명령어(bash)는?",
+        "acceptedAnswers": [
+          "export"
+        ]
+      },
+      {
+        "id": "4e17f779-dd79-45e1-897f-3b7d25e344e5",
+        "kcId": "bf1b8697-0dc5-451f-8b03-18f4f956dc2e",
+        "createdAt": "2026-09-06T11:54:18.141Z",
+        "type": "short",
+        "prompt": "프로세스를 종료시키는 명령어는?",
+        "acceptedAnswers": [
+          "kill"
+        ]
+      },
+      {
+        "id": "4e5e740f-bdfd-4c66-832c-692f75ea97d1",
+        "kcId": "1ea37166-a5ae-4c2a-b70d-311b1ff7f73f",
+        "createdAt": "2026-09-06T11:54:18.141Z",
+        "type": "flashcard",
+        "front": "고성능·경량 웹서버/리버스 프록시로 널리 쓰이는 소프트웨어는?",
+        "back": "Nginx"
+      },
+      {
+        "id": "51af86ae-b359-4881-9a63-cd5036d04f63",
+        "kcId": "bf1b8697-0dc5-451f-8b03-18f4f956dc2e",
+        "createdAt": "2026-09-06T11:54:18.141Z",
+        "type": "short",
+        "prompt": "프로세스를 강제 종료하는 시그널 번호는?",
+        "acceptedAnswers": [
+          "9"
+        ]
+      },
+      {
+        "id": "520b27d8-df2a-4b31-b52f-937171250b54",
+        "kcId": "bcf65657-5967-40b5-b1d0-06c440554387",
+        "createdAt": "2026-09-06T11:54:18.141Z",
+        "type": "short",
+        "prompt": "디스크 파티션을 생성/편집하는 대표 명령어는?",
+        "acceptedAnswers": [
+          "fdisk"
+        ]
+      },
+      {
+        "id": "5657d8ae-6f9d-459b-a6e1-c79b39198a8a",
+        "kcId": "5dbac27d-a796-416f-9880-5e1d4094e9b5",
+        "createdAt": "2026-09-06T11:54:18.141Z",
+        "type": "short",
+        "prompt": "도메인 이름에 대한 DNS 조회를 수행하는 명령어는?",
+        "acceptedAnswers": [
+          "nslookup",
+          "dig"
+        ]
+      },
+      {
+        "id": "578dd018-b6e8-4e0e-9457-2e8031ef2263",
+        "kcId": "3a8e18de-99fa-4dd1-acb3-5fd1dab30830",
+        "createdAt": "2026-09-06T11:54:18.140Z",
+        "type": "cloze",
+        "text": "데비안 계열 배포판은 패키지 관리에 {{APT}}를 사용한다"
+      },
+      {
+        "id": "5976e397-ace8-4969-a635-90d6a8469c30",
+        "kcId": "d774294b-67ec-4859-8204-bf98eddefd1e",
+        "createdAt": "2026-09-06T11:54:18.140Z",
+        "type": "flashcard",
+        "front": "일반 사용자용 실행 파일이 위치하는 표준 디렉터리는?",
+        "back": "/usr/bin"
+      },
+      {
+        "id": "5a4f76c6-5a8a-48ee-bdaa-354b5f7a2c40",
+        "kcId": "bcf65657-5967-40b5-b1d0-06c440554387",
+        "createdAt": "2026-09-06T11:54:18.141Z",
+        "type": "short",
+        "prompt": "디렉터리별 실제 사용 용량을 확인하는 명령어는?",
+        "acceptedAnswers": [
+          "du"
+        ]
+      },
+      {
+        "id": "5b687a93-d677-4b89-bc84-ffd6046b3fe3",
+        "kcId": "6c5da436-a0b1-43ac-8713-8b40553b7bda",
+        "createdAt": "2026-09-06T11:54:18.140Z",
+        "type": "short",
+        "prompt": "사용자 비밀번호를 설정/변경하는 명령어는?",
+        "acceptedAnswers": [
+          "passwd"
+        ]
+      },
+      {
+        "id": "5f3660d7-ac35-4cff-83fe-7297e81cc797",
+        "kcId": "5dbac27d-a796-416f-9880-5e1d4094e9b5",
+        "createdAt": "2026-09-06T11:54:18.141Z",
+        "type": "cloze",
+        "text": "HTTPS의 기본 포트 번호는 {{443}}번이다"
+      },
+      {
+        "id": "632d6926-b76e-41ce-aa5d-0b2c96ddb7a4",
+        "kcId": "bf1b8697-0dc5-451f-8b03-18f4f956dc2e",
+        "createdAt": "2026-09-06T11:54:18.141Z",
+        "type": "short",
+        "prompt": "포그라운드로 전환된 작업을 일시 중지시키는 단축키는?",
+        "acceptedAnswers": [
+          "Ctrl+Z"
+        ]
+      },
+      {
+        "id": "65df7014-cf5f-4fb2-bcd9-469b89d2809d",
+        "kcId": "d774294b-67ec-4859-8204-bf98eddefd1e",
+        "createdAt": "2026-09-06T11:54:18.140Z",
+        "type": "flashcard",
+        "front": "시스템 설정 파일이 위치하는 디렉터리는?",
+        "back": "/etc"
+      },
+      {
+        "id": "69681c1e-9818-40f2-9304-6eec82a07dae",
+        "kcId": "1dd88a1c-cd46-41ed-895f-8a5285d4377e",
+        "createdAt": "2026-09-06T11:54:18.141Z",
+        "type": "short",
+        "prompt": "특정 IP의 반복 로그인 실패 시 차단해주는 보안 도구는?",
+        "acceptedAnswers": [
+          "fail2ban"
+        ]
+      },
+      {
+        "id": "713d3455-1e7e-4245-a6be-53222b69def7",
+        "kcId": "6c5da436-a0b1-43ac-8713-8b40553b7bda",
+        "createdAt": "2026-09-06T11:54:18.140Z",
+        "type": "cloze",
+        "text": "chmod 755는 소유자에게 {{rwx}} 권한을 부여한다"
+      },
+      {
+        "id": "72945b49-5647-4e2c-87fa-a625d9f32b27",
+        "kcId": "20f8b073-fdd7-4ea2-9dfa-65d2d6a6d5c1",
+        "createdAt": "2026-09-06T11:54:18.140Z",
+        "type": "flashcard",
+        "front": "BIOS 이후 커널을 메모리에 적재하는 부트로더 프로그램은?",
+        "back": "GRUB(GRUB2)"
+      },
+      {
+        "id": "72b0baad-9425-4483-b111-7a114375f1c0",
+        "kcId": "20235aac-c90e-4d27-881e-d3f593ab992c",
+        "createdAt": "2026-09-06T11:54:18.140Z",
+        "type": "short",
+        "prompt": "숨김 파일까지 포함해 목록을 보여주는 ls 옵션은?",
+        "acceptedAnswers": [
+          "ls -a"
+        ]
+      },
+      {
+        "id": "74878c03-f35b-4698-997a-b1381545e9b8",
+        "kcId": "bcf65657-5967-40b5-b1d0-06c440554387",
+        "createdAt": "2026-09-06T11:54:18.141Z",
+        "type": "short",
+        "prompt": "부팅 시 자동 마운트 정보를 담고 있는 시스템 파일은?",
+        "acceptedAnswers": [
+          "/etc/fstab"
+        ]
+      },
+      {
+        "id": "74cd35b4-8135-4878-bf8b-bbcaca093af2",
+        "kcId": "6c5da436-a0b1-43ac-8713-8b40553b7bda",
+        "createdAt": "2026-09-06T11:54:18.140Z",
+        "type": "short",
+        "prompt": "새로운 그룹을 생성하는 명령어는?",
+        "acceptedAnswers": [
+          "groupadd"
+        ]
+      },
+      {
+        "id": "768ff60c-36f6-49d7-82ac-160c21bf3225",
+        "kcId": "574a5092-bdc0-42b8-9d58-b8bc99522b0a",
+        "createdAt": "2026-09-06T11:54:18.141Z",
+        "type": "short",
+        "prompt": "리눅스에서 가장 널리 쓰이는 기본 셸은?",
+        "acceptedAnswers": [
+          "bash"
+        ]
+      },
+      {
+        "id": "784db045-2b8a-454a-93c6-fa39779f015c",
+        "kcId": "20235aac-c90e-4d27-881e-d3f593ab992c",
+        "createdAt": "2026-09-06T11:54:18.140Z",
+        "type": "short",
+        "prompt": "파일 내용을 화면에 출력하는 기본 명령어는?",
+        "acceptedAnswers": [
+          "cat"
+        ]
+      },
+      {
+        "id": "79025b0f-4481-4a77-982e-e763f2ec3cbe",
+        "kcId": "574a5092-bdc0-42b8-9d58-b8bc99522b0a",
+        "createdAt": "2026-09-06T11:54:18.141Z",
+        "type": "cloze",
+        "text": "셸 스크립트 첫 줄에 해석기를 지정하는 구문을 {{셔뱅(Shebang)}}이라 한다"
+      },
+      {
+        "id": "7a9762df-319a-49ff-9a67-c6ced392f492",
+        "kcId": "20235aac-c90e-4d27-881e-d3f593ab992c",
+        "createdAt": "2026-09-06T11:54:18.140Z",
+        "type": "short",
+        "prompt": "새 디렉터리를 생성하는 명령어는?",
+        "acceptedAnswers": [
+          "mkdir"
+        ]
+      },
+      {
+        "id": "8315dd46-8a59-40ec-b40a-f0fcc365be52",
+        "kcId": "5dbac27d-a796-416f-9880-5e1d4094e9b5",
+        "createdAt": "2026-09-06T11:54:18.141Z",
+        "type": "short",
+        "prompt": "최신 리눅스에서 네트워크 인터페이스를 관리하는 명령어는?",
+        "acceptedAnswers": [
+          "ip"
+        ]
+      },
+      {
+        "id": "84e70ffc-9ddc-4719-8577-891858494961",
+        "kcId": "d774294b-67ec-4859-8204-bf98eddefd1e",
+        "createdAt": "2026-09-06T11:54:18.140Z",
+        "type": "flashcard",
+        "front": "사용자 홈 디렉터리가 위치하는 디렉터리는?",
+        "back": "/home"
+      },
+      {
+        "id": "856c298d-cfd5-4ecd-8ad6-7a3bba4af514",
+        "kcId": "bcf65657-5967-40b5-b1d0-06c440554387",
+        "createdAt": "2026-09-06T11:54:18.141Z",
+        "type": "cloze",
+        "text": "리눅스의 대표적인 저널링 파일시스템 이름은 {{ext4}}이다"
+      },
+      {
+        "id": "86cbad3c-38b9-4217-8826-a5d538c5a367",
+        "kcId": "1ea37166-a5ae-4c2a-b70d-311b1ff7f73f",
+        "createdAt": "2026-09-06T11:54:18.141Z",
+        "type": "short",
+        "prompt": "Apache 웹 서버의 주 설정 파일 이름은?",
+        "acceptedAnswers": [
+          "httpd.conf"
+        ]
+      },
+      {
+        "id": "88cc40d1-e8cf-49b0-b101-5ff6e9ac6262",
+        "kcId": "d774294b-67ec-4859-8204-bf98eddefd1e",
+        "createdAt": "2026-09-06T11:54:18.140Z",
+        "type": "flashcard",
+        "front": "공유 라이브러리 파일이 위치하는 디렉터리는?",
+        "back": "/lib 또는 /lib64"
+      },
+      {
+        "id": "8c98ae7c-894f-4265-bb10-ce23f39a0dfd",
+        "kcId": "574a5092-bdc0-42b8-9d58-b8bc99522b0a",
+        "createdAt": "2026-09-06T11:54:18.141Z",
+        "type": "short",
+        "prompt": "셸에서 명령 히스토리를 출력하는 명령어는?",
+        "acceptedAnswers": [
+          "history"
+        ]
+      },
+      {
+        "id": "903a6d84-8607-49ed-aa03-d6b7b9fb1e38",
+        "kcId": "20f8b073-fdd7-4ea2-9dfa-65d2d6a6d5c1",
+        "createdAt": "2026-09-06T11:54:18.140Z",
+        "type": "short",
+        "prompt": "systemd에서 서비스 상태를 확인하는 명령어는?",
+        "acceptedAnswers": [
+          "systemctl status"
+        ]
+      },
+      {
+        "id": "91f133c0-8fac-437a-a449-fa1aeba87403",
+        "kcId": "20f8b073-fdd7-4ea2-9dfa-65d2d6a6d5c1",
+        "createdAt": "2026-09-06T11:54:18.140Z",
+        "type": "short",
+        "prompt": "시스템 실행 레벨(runlevel) 중 다중 사용자 텍스트 모드는 몇 번인가?",
+        "acceptedAnswers": [
+          "3"
+        ]
+      },
+      {
+        "id": "956a587e-4053-4518-8a18-f4dffb9beb49",
+        "kcId": "20235aac-c90e-4d27-881e-d3f593ab992c",
+        "createdAt": "2026-09-06T11:54:18.140Z",
+        "type": "short",
+        "prompt": "파일 내용을 페이지 단위로 보여주는 명령어는?",
+        "acceptedAnswers": [
+          "less",
+          "more"
+        ]
+      },
+      {
+        "id": "9bfec82a-8cc0-41f6-b228-5790a0c58d74",
+        "kcId": "20f8b073-fdd7-4ea2-9dfa-65d2d6a6d5c1",
+        "createdAt": "2026-09-06T11:54:18.140Z",
+        "type": "short",
+        "prompt": "systemd에서 부팅 시 자동 시작되도록 서비스를 설정하는 명령은?",
+        "acceptedAnswers": [
+          "systemctl enable"
+        ]
+      },
+      {
+        "id": "9fc5cfd3-fb02-47ea-a56b-a374eb533b9c",
+        "kcId": "6c5da436-a0b1-43ac-8713-8b40553b7bda",
+        "createdAt": "2026-09-06T11:54:18.140Z",
+        "type": "short",
+        "prompt": "사용자 계정을 삭제하는 명령어는?",
+        "acceptedAnswers": [
+          "userdel"
+        ]
+      },
+      {
+        "id": "a17af488-0c25-443a-af25-5b4bbd8ad4dc",
+        "kcId": "5dbac27d-a796-416f-9880-5e1d4094e9b5",
+        "createdAt": "2026-09-06T11:54:18.141Z",
+        "type": "cloze",
+        "text": "SSH의 기본 포트 번호는 {{22}}번이다"
+      },
+      {
+        "id": "a4e8eb96-c23f-4c73-a9b3-4dda53dada83",
+        "kcId": "bcf65657-5967-40b5-b1d0-06c440554387",
+        "createdAt": "2026-09-06T11:54:18.141Z",
+        "type": "short",
+        "prompt": "파일시스템을 생성(포맷)하는 명령어는?",
+        "acceptedAnswers": [
+          "mkfs"
+        ]
+      },
+      {
+        "id": "a7059c39-3ef1-4683-b763-6fbf1752b285",
+        "kcId": "bf1b8697-0dc5-451f-8b03-18f4f956dc2e",
+        "createdAt": "2026-09-06T11:54:18.141Z",
+        "type": "cloze",
+        "text": "kill -9 명령은 {{SIGKILL}} 시그널을 프로세스에 전달한다"
+      },
+      {
+        "id": "adf26087-4608-480a-a9de-48f697653b65",
+        "kcId": "574a5092-bdc0-42b8-9d58-b8bc99522b0a",
+        "createdAt": "2026-09-06T11:54:18.141Z",
+        "type": "short",
+        "prompt": "표준 출력을 파일에 추가로 리다이렉션하는 기호는?",
+        "acceptedAnswers": [
+          ">>"
+        ]
+      },
+      {
+        "id": "afbbefc1-02c5-4055-8ca1-d3c2972a069d",
+        "kcId": "bcf65657-5967-40b5-b1d0-06c440554387",
+        "createdAt": "2026-09-06T11:54:18.141Z",
+        "type": "short",
+        "prompt": "마운트된 파일시스템을 해제하는 명령어는?",
+        "acceptedAnswers": [
+          "umount"
+        ]
+      },
+      {
+        "id": "b2946de0-e244-4b94-a58e-ffcbddd4ece8",
+        "kcId": "51c8daf6-18df-4d25-bc65-63dbc124537e",
+        "createdAt": "2026-09-06T11:54:18.141Z",
+        "type": "short",
+        "prompt": "데비안 계열에서 의존성까지 해결해 설치하는 고수준 명령어는?",
+        "acceptedAnswers": [
+          "apt-get",
+          "apt"
+        ]
+      },
+      {
+        "id": "b60ad47f-ec65-40b2-9c62-8b3dc538b690",
+        "kcId": "1ea37166-a5ae-4c2a-b70d-311b1ff7f73f",
+        "createdAt": "2026-09-06T11:54:18.141Z",
+        "type": "short",
+        "prompt": "메일 서버 소프트웨어 중 대표적인 MTA는?",
+        "acceptedAnswers": [
+          "sendmail",
+          "postfix"
+        ]
+      },
+      {
+        "id": "b840ca82-b60c-46ae-94c6-3fbe133d5764",
+        "kcId": "574a5092-bdc0-42b8-9d58-b8bc99522b0a",
+        "createdAt": "2026-09-06T11:54:18.141Z",
+        "type": "short",
+        "prompt": "모든 환경 변수를 출력하는 명령어는?",
+        "acceptedAnswers": [
+          "env",
+          "printenv"
+        ]
+      },
+      {
+        "id": "b9fe88de-689c-483c-9c37-ec8fa13097a5",
+        "kcId": "bf1b8697-0dc5-451f-8b03-18f4f956dc2e",
+        "createdAt": "2026-09-06T11:54:18.141Z",
+        "type": "short",
+        "prompt": "작업을 백그라운드로 실행시키는 명령어 뒤에 붙이는 기호는?",
+        "acceptedAnswers": [
+          "&"
+        ]
+      },
+      {
+        "id": "ba1445ed-92a9-4271-9164-c355becb2d1a",
+        "kcId": "20235aac-c90e-4d27-881e-d3f593ab992c",
+        "createdAt": "2026-09-06T11:54:18.140Z",
+        "type": "short",
+        "prompt": "파일의 뒷부분 일부만 출력하는 명령어는?",
+        "acceptedAnswers": [
+          "tail"
+        ]
+      },
+      {
+        "id": "bafea499-f0c4-492c-b329-a03b6f7191c8",
+        "kcId": "5dbac27d-a796-416f-9880-5e1d4094e9b5",
+        "createdAt": "2026-09-06T11:54:18.141Z",
+        "type": "cloze",
+        "text": "HTTP의 기본 포트 번호는 {{80}}번이다"
+      },
+      {
+        "id": "bc43d14b-173d-41ba-9050-e4fc5b94f730",
+        "kcId": "5dbac27d-a796-416f-9880-5e1d4094e9b5",
+        "createdAt": "2026-09-06T11:54:18.141Z",
+        "type": "short",
+        "prompt": "네트워크 대상까지의 연결 상태를 확인하는 명령어(ICMP)는?",
+        "acceptedAnswers": [
+          "ping"
+        ]
+      },
+      {
+        "id": "bd62a4d4-7c95-49fd-ada3-ca91c587862b",
+        "kcId": "d774294b-67ec-4859-8204-bf98eddefd1e",
+        "createdAt": "2026-09-06T11:54:18.140Z",
+        "type": "flashcard",
+        "front": "가변 데이터(로그, 메일 큐 등)가 저장되는 디렉터리는?",
+        "back": "/var"
+      },
+      {
+        "id": "bf3b7802-a59e-4d74-813b-afeec108eb7f",
+        "kcId": "bcf65657-5967-40b5-b1d0-06c440554387",
+        "createdAt": "2026-09-06T11:54:18.141Z",
+        "type": "short",
+        "prompt": "파일시스템을 마운트하는 명령어는?",
+        "acceptedAnswers": [
+          "mount"
+        ]
+      },
+      {
+        "id": "c1641970-ef50-444e-b2c1-028044c9e010",
+        "kcId": "51c8daf6-18df-4d25-bc65-63dbc124537e",
+        "createdAt": "2026-09-06T11:54:18.141Z",
+        "type": "short",
+        "prompt": "레드햇 계열에서 저수준 패키지 설치 명령어는?",
+        "acceptedAnswers": [
+          "rpm"
+        ]
+      },
+      {
+        "id": "c5b71b77-6d0b-44df-b5ae-faa565e976e9",
+        "kcId": "5dbac27d-a796-416f-9880-5e1d4094e9b5",
+        "createdAt": "2026-09-06T11:54:18.141Z",
+        "type": "short",
+        "prompt": "목적지까지의 경로(라우팅 경로)를 추적하는 명령어는?",
+        "acceptedAnswers": [
+          "traceroute"
+        ]
+      },
+      {
+        "id": "c70fdeb1-b732-46f0-81d9-2b0da0f01b60",
+        "kcId": "6c5da436-a0b1-43ac-8713-8b40553b7bda",
+        "createdAt": "2026-09-06T11:54:18.140Z",
+        "type": "short",
+        "prompt": "새로운 사용자 계정을 생성하는 명령어는?",
+        "acceptedAnswers": [
+          "useradd"
+        ]
+      },
+      {
+        "id": "c8b0a600-c863-4ff6-9de3-ce206e975d46",
+        "kcId": "d774294b-67ec-4859-8204-bf98eddefd1e",
+        "createdAt": "2026-09-06T11:54:18.140Z",
+        "type": "flashcard",
+        "front": "실행 중인 프로세스 정보를 담은 가상 파일시스템 디렉터리는?",
+        "back": "/proc"
+      },
+      {
+        "id": "c8c3bfa6-1a3f-4501-89de-db82637f1041",
+        "kcId": "574a5092-bdc0-42b8-9d58-b8bc99522b0a",
+        "createdAt": "2026-09-06T11:54:18.141Z",
+        "type": "short",
+        "prompt": "표준 출력을 파일로 덮어쓰기 리다이렉션하는 기호는?",
+        "acceptedAnswers": [
+          ">"
+        ]
+      },
+      {
+        "id": "c977f7df-f4e8-43e0-b01e-26a27b681900",
+        "kcId": "3a8e18de-99fa-4dd1-acb3-5fd1dab30830",
+        "createdAt": "2026-09-06T11:54:18.140Z",
+        "type": "cloze",
+        "text": "레드햇 계열 배포판은 패키지 관리에 {{RPM}}을 사용한다"
+      },
+      {
+        "id": "cf65b68b-2e7c-4235-8ac7-4af7b65871a0",
+        "kcId": "3a8e18de-99fa-4dd1-acb3-5fd1dab30830",
+        "createdAt": "2026-09-06T11:54:18.140Z",
+        "type": "flashcard",
+        "front": "리눅스 커널을 최초로 개발한 사람은?",
+        "back": "리누스 토르발스(Linus Torvalds)"
+      },
+      {
+        "id": "d163be49-3d97-4817-a969-3eb43c22c836",
+        "kcId": "20235aac-c90e-4d27-881e-d3f593ab992c",
+        "createdAt": "2026-09-06T11:54:18.140Z",
+        "type": "short",
+        "prompt": "파일을 복사하는 명령어는?",
+        "acceptedAnswers": [
+          "cp"
+        ]
+      },
+      {
+        "id": "d5526440-9af8-4d0a-87c4-b7783864ed61",
+        "kcId": "20235aac-c90e-4d27-881e-d3f593ab992c",
+        "createdAt": "2026-09-06T11:54:18.140Z",
+        "type": "short",
+        "prompt": "현재 작업 디렉터리를 출력하는 명령어는?",
+        "acceptedAnswers": [
+          "pwd"
+        ]
+      },
+      {
+        "id": "d8ea3672-608f-4f17-8ce1-a49b61f6455f",
+        "kcId": "d774294b-67ec-4859-8204-bf98eddefd1e",
+        "createdAt": "2026-09-06T11:54:18.140Z",
+        "type": "short",
+        "prompt": "최상위 루트 디렉터리를 나타내는 기호는?",
+        "acceptedAnswers": [
+          "/"
+        ]
+      },
+      {
+        "id": "deea6deb-92e7-48e3-8886-8807adb66534",
+        "kcId": "d774294b-67ec-4859-8204-bf98eddefd1e",
+        "createdAt": "2026-09-06T11:54:18.140Z",
+        "type": "cloze",
+        "text": "리눅스 파일시스템에서 최상위 디렉터리는 {{/}}로 표시한다"
+      },
+      {
+        "id": "e26177c0-cbd7-4069-b5ad-2e8192fbcfb5",
+        "kcId": "20235aac-c90e-4d27-881e-d3f593ab992c",
+        "createdAt": "2026-09-06T11:54:18.140Z",
+        "type": "short",
+        "prompt": "빈 디렉터리를 삭제하는 명령어는?",
+        "acceptedAnswers": [
+          "rmdir"
+        ]
+      },
+      {
+        "id": "e2c6e856-845d-4c8f-97fe-89503e814435",
+        "kcId": "20f8b073-fdd7-4ea2-9dfa-65d2d6a6d5c1",
+        "createdAt": "2026-09-06T11:54:18.140Z",
+        "type": "flashcard",
+        "front": "GRUB 설정 파일의 일반적 경로는?",
+        "back": "/boot/grub2/grub.cfg (또는 /boot/grub/grub.cfg)"
+      },
+      {
+        "id": "e3e9c41a-7b50-40f5-8e72-1b4fbb21a13d",
+        "kcId": "d774294b-67ec-4859-8204-bf98eddefd1e",
+        "createdAt": "2026-09-06T11:54:18.140Z",
+        "type": "flashcard",
+        "front": "장치 파일이 위치하는 디렉터리는?",
+        "back": "/dev"
+      },
+      {
+        "id": "e567e205-139e-4318-b18d-bb8449489ed9",
+        "kcId": "1ea37166-a5ae-4c2a-b70d-311b1ff7f73f",
+        "createdAt": "2026-09-06T11:54:18.141Z",
+        "type": "flashcard",
+        "front": "리눅스에서 가장 널리 쓰이는 오픈소스 웹 서버 소프트웨어는?",
+        "back": "Apache HTTP Server"
+      },
+      {
+        "id": "f2610192-4926-4797-9d99-94602a4d61f0",
+        "kcId": "6c5da436-a0b1-43ac-8713-8b40553b7bda",
+        "createdAt": "2026-09-06T11:54:18.141Z",
+        "type": "short",
+        "prompt": "일반 사용자가 관리자 권한으로 명령을 실행할 때 사용하는 명령어는?",
+        "acceptedAnswers": [
+          "sudo"
+        ]
+      },
+      {
+        "id": "f2a203f7-1f6d-4208-9e1c-032df06b07d7",
+        "kcId": "6c5da436-a0b1-43ac-8713-8b40553b7bda",
+        "createdAt": "2026-09-06T11:54:18.141Z",
+        "type": "short",
+        "prompt": "사용자 계정 정보가 저장된 시스템 파일은?",
+        "acceptedAnswers": [
+          "/etc/passwd"
+        ]
+      },
+      {
+        "id": "f2e50522-057e-4b33-bb48-48eb1e7b98db",
+        "kcId": "6c5da436-a0b1-43ac-8713-8b40553b7bda",
+        "createdAt": "2026-09-06T11:54:18.141Z",
+        "type": "short",
+        "prompt": "그룹 정보가 저장된 시스템 파일은?",
+        "acceptedAnswers": [
+          "/etc/group"
+        ]
+      },
+      {
+        "id": "f6da1297-f29e-4557-9137-e3dba6d81363",
+        "kcId": "5dbac27d-a796-416f-9880-5e1d4094e9b5",
+        "createdAt": "2026-09-06T11:54:18.141Z",
+        "type": "short",
+        "prompt": "네트워크 인터페이스 설정을 확인하는 전통적 명령어는?",
+        "acceptedAnswers": [
+          "ifconfig"
+        ]
+      },
+      {
+        "id": "f74edc43-e42c-4b63-b17b-2f4801bae0fd",
+        "kcId": "1dd88a1c-cd46-41ed-895f-8a5285d4377e",
+        "createdAt": "2026-09-06T11:54:18.141Z",
+        "type": "flashcard",
+        "front": "네트워크 트래픽을 필터링하는 리눅스 커널 방화벽 프레임워크는?",
+        "back": "iptables(넷필터)"
+      },
+      {
+        "id": "fd8e984d-ee55-48e3-88ac-e8b4d0b85797",
+        "kcId": "5dbac27d-a796-416f-9880-5e1d4094e9b5",
+        "createdAt": "2026-09-06T11:54:18.141Z",
+        "type": "cloze",
+        "text": "FTP 제어 연결의 기본 포트 번호는 {{21}}번이다"
+      },
+      {
+        "id": "fee51544-819c-4ede-8716-b018781746b1",
+        "kcId": "1ea37166-a5ae-4c2a-b70d-311b1ff7f73f",
+        "createdAt": "2026-09-06T11:54:18.141Z",
+        "type": "short",
+        "prompt": "DNS에서 도메인을 IP로 변환하는 레코드 종류는?",
+        "acceptedAnswers": [
+          "A",
+          "A레코드"
+        ]
+      },
       {
         "id": "seed-i1",
         "type": "flashcard",
@@ -263,6 +1188,78 @@
     ],
     "kcs": [
       {
+        "id": "1dd88a1c-cd46-41ed-895f-8a5285d4377e",
+        "name": "보안",
+        "prereqIds": [],
+        "createdAt": "2026-09-06T11:54:18.141Z"
+      },
+      {
+        "id": "1ea37166-a5ae-4c2a-b70d-311b1ff7f73f",
+        "name": "서버 서비스",
+        "prereqIds": [],
+        "createdAt": "2026-09-06T11:54:18.141Z"
+      },
+      {
+        "id": "20235aac-c90e-4d27-881e-d3f593ab992c",
+        "name": "파일 관리 명령어",
+        "prereqIds": [],
+        "createdAt": "2026-09-06T11:54:18.140Z"
+      },
+      {
+        "id": "20f8b073-fdd7-4ea2-9dfa-65d2d6a6d5c1",
+        "name": "설치와 부팅",
+        "prereqIds": [],
+        "createdAt": "2026-09-06T11:54:18.140Z"
+      },
+      {
+        "id": "3a8e18de-99fa-4dd1-acb3-5fd1dab30830",
+        "name": "리눅스 개요",
+        "prereqIds": [],
+        "createdAt": "2026-09-06T11:54:18.140Z"
+      },
+      {
+        "id": "51c8daf6-18df-4d25-bc65-63dbc124537e",
+        "name": "패키지 관리",
+        "prereqIds": [],
+        "createdAt": "2026-09-06T11:54:18.141Z"
+      },
+      {
+        "id": "574a5092-bdc0-42b8-9d58-b8bc99522b0a",
+        "name": "셸과 셸 스크립트",
+        "prereqIds": [],
+        "createdAt": "2026-09-06T11:54:18.141Z"
+      },
+      {
+        "id": "5dbac27d-a796-416f-9880-5e1d4094e9b5",
+        "name": "네트워크 관리",
+        "prereqIds": [],
+        "createdAt": "2026-09-06T11:54:18.141Z"
+      },
+      {
+        "id": "6c5da436-a0b1-43ac-8713-8b40553b7bda",
+        "name": "권한과 사용자 관리",
+        "prereqIds": [],
+        "createdAt": "2026-09-06T11:54:18.140Z"
+      },
+      {
+        "id": "bcf65657-5967-40b5-b1d0-06c440554387",
+        "name": "디스크와 파일시스템 관리",
+        "prereqIds": [],
+        "createdAt": "2026-09-06T11:54:18.141Z"
+      },
+      {
+        "id": "bf1b8697-0dc5-451f-8b03-18f4f956dc2e",
+        "name": "프로세스 관리",
+        "prereqIds": [],
+        "createdAt": "2026-09-06T11:54:18.141Z"
+      },
+      {
+        "id": "d774294b-67ec-4859-8204-bf98eddefd1e",
+        "name": "파일시스템 구조",
+        "prereqIds": [],
+        "createdAt": "2026-09-06T11:54:18.140Z"
+      },
+      {
         "id": "seed-kc-basics",
         "name": "학습 원리 기초",
         "prereqIds": [],
@@ -286,8 +1283,151 @@
       }
     ],
     "schedulerSettings": null,
-    "studyPrefs": null,
+    "studyPrefs": {
+      "dailyReviewCap": null,
+      "vacationMode": false,
+      "notificationsEnabled": true
+    },
     "sessions": [
+      {
+        "startedAt": "2026-09-06T00:34:31.370Z",
+        "budgetMinutes": 20,
+        "policyVersion": "default",
+        "plannedItemIds": [
+          "089cdc21-18b3-47c8-ae39-16b4d3369adc",
+          "0c3032a4-81f6-46b5-a45f-67a8c6fbbf24",
+          "120ae225-a94c-462f-9696-812d38907560",
+          "3d58b557-3381-4ed1-8611-6f887234eb40",
+          "44fa3d1c-5579-42e2-961b-5415863330f2",
+          "506f5168-bdfc-4c3c-9ebe-bf956e486ce3",
+          "51d5281a-16d8-41be-8e5d-0a8f013801f8",
+          "52b8e66c-52a5-4151-9109-2c6cf6a6f9db",
+          "59d1211c-a3c6-4fc2-bddc-d0c64a9e49b6",
+          "59df7703-c60d-4483-964c-3e2113da02ff",
+          "5e179ac7-352c-4e0c-9fde-c850d7e8c3f5",
+          "5e3a47ff-0591-40c3-94f8-727eaf9757b8",
+          "5ffc185e-d13c-4263-ae94-057c1a214283",
+          "613f0f9d-bc40-448a-9409-f418b638cab1",
+          "6467bc51-2858-417a-a2d7-7b8b068afdbc",
+          "68e67991-6ca9-4f2a-8701-32d237bbf257",
+          "6c47395f-3fd7-4291-b409-4a9395e0abc4",
+          "71ef92e6-7be7-478c-9cb3-1564fd89618c",
+          "739e50a7-46dc-4b80-9ab1-a1eb673aaad8",
+          "73d488fb-6899-4cd3-a68a-e9b1219347a8",
+          "754e4202-2441-476f-b0f6-e05ac0a088dd",
+          "78e53814-4978-4e34-b5ef-9432b7448eca",
+          "7d334afb-c6cd-4d63-9b81-586babcf8c83",
+          "827cdfb3-0025-4121-a8a4-bd2b37b85ff0",
+          "82887366-7c6c-49e6-b6b6-05a9012fd91c",
+          "84601738-7bf9-48c5-bb12-a8afb9ee1421"
+        ],
+        "pretestItemId": null,
+        "id": "0644f8f9-f67b-4713-a949-b7892ead7f93",
+        "endedAt": "2026-09-06T00:42:29.199Z"
+      },
+      {
+        "startedAt": "2026-09-05T23:35:59.467Z",
+        "budgetMinutes": 20,
+        "policyVersion": "default",
+        "plannedItemIds": [
+          "seed-i11",
+          "seed-i1",
+          "seed-i16",
+          "seed-i2",
+          "seed-i3",
+          "seed-i4",
+          "seed-i5"
+        ],
+        "pretestItemId": "seed-i11",
+        "id": "43a772bc-a4f8-46f5-b20e-2dd0d849ff17",
+        "endedAt": "2026-09-06T00:16:17.328Z"
+      },
+      {
+        "startedAt": "2026-09-06T00:34:00.978Z",
+        "budgetMinutes": 20,
+        "policyVersion": "default",
+        "plannedItemIds": [
+          "072b358c-9ab4-4ca1-9c7e-5b2cb19996f5",
+          "089cdc21-18b3-47c8-ae39-16b4d3369adc",
+          "0c3032a4-81f6-46b5-a45f-67a8c6fbbf24",
+          "3d58b557-3381-4ed1-8611-6f887234eb40",
+          "44fa3d1c-5579-42e2-961b-5415863330f2",
+          "506f5168-bdfc-4c3c-9ebe-bf956e486ce3",
+          "51d5281a-16d8-41be-8e5d-0a8f013801f8",
+          "52b8e66c-52a5-4151-9109-2c6cf6a6f9db",
+          "59d1211c-a3c6-4fc2-bddc-d0c64a9e49b6",
+          "59df7703-c60d-4483-964c-3e2113da02ff",
+          "5e179ac7-352c-4e0c-9fde-c850d7e8c3f5",
+          "5e3a47ff-0591-40c3-94f8-727eaf9757b8",
+          "5ffc185e-d13c-4263-ae94-057c1a214283",
+          "613f0f9d-bc40-448a-9409-f418b638cab1",
+          "6467bc51-2858-417a-a2d7-7b8b068afdbc",
+          "68e67991-6ca9-4f2a-8701-32d237bbf257",
+          "6c47395f-3fd7-4291-b409-4a9395e0abc4",
+          "71ef92e6-7be7-478c-9cb3-1564fd89618c",
+          "739e50a7-46dc-4b80-9ab1-a1eb673aaad8",
+          "73d488fb-6899-4cd3-a68a-e9b1219347a8",
+          "754e4202-2441-476f-b0f6-e05ac0a088dd",
+          "78e53814-4978-4e34-b5ef-9432b7448eca",
+          "7d334afb-c6cd-4d63-9b81-586babcf8c83",
+          "827cdfb3-0025-4121-a8a4-bd2b37b85ff0",
+          "82887366-7c6c-49e6-b6b6-05a9012fd91c",
+          "84601738-7bf9-48c5-bb12-a8afb9ee1421"
+        ],
+        "pretestItemId": null,
+        "id": "5472b0ec-1b80-47d5-8401-a99ae6b9c9dc",
+        "endedAt": "2026-09-06T00:34:31.367Z"
+      },
+      {
+        "startedAt": "2026-09-06T00:16:17.331Z",
+        "budgetMinutes": 20,
+        "policyVersion": "default",
+        "plannedItemIds": [
+          "seed-i12",
+          "seed-i3",
+          "seed-i2",
+          "0099193a-eb67-49b7-ae2f-d65c995e518b",
+          "09bc6ad1-099a-478a-a733-a3bdb00b42d9",
+          "0affe108-f6e3-4926-a83c-dcb239cae7ec",
+          "1717824a-a130-4c80-bae9-5a593c9989b9",
+          "17851950-5cf7-4c3b-b5fa-52dae5ba7243",
+          "187decac-dcee-4915-b62c-71cb4614b084",
+          "1a4361d6-7e87-4cd9-8360-84d37e8edc24",
+          "274bcc67-f976-4b81-841b-4c3c954fa7e0",
+          "33d66961-033b-45ce-8b02-f90fa687e1e8",
+          "39ba551a-e3f0-4e25-b58c-43fe57718cb0",
+          "3e9dc237-5ecf-4162-b0c6-7755a4528c9b",
+          "47b880fc-e74b-44a5-a5c9-120747665b27",
+          "508be65d-f38a-4824-9062-f9f491a6ed4e",
+          "5728e4c2-37a2-4ac9-b39a-c8727128cb18",
+          "57871f99-bbbf-47b3-9f9b-868518b00785",
+          "5af4a589-a21d-4346-b37f-615541f35ee6",
+          "655a1d05-5598-4e3e-bfd1-e41476fb8ff5",
+          "687b4a99-5eae-4843-8b9a-58d61d3de235",
+          "71942e1f-9638-4cb7-b511-7dfb6da1932c",
+          "87b89c62-dc88-49d1-8684-92421a7d3dd1",
+          "9a160db1-71f5-4f0b-b51d-531612056632",
+          "9a365eb5-981a-4dad-9be8-634d359b29a9",
+          "9b932a5f-b6d2-4365-8bda-7f89275a5d4a",
+          "b2f95c7d-baa1-4ac0-9cf4-8b4a4a6f308e"
+        ],
+        "pretestItemId": "seed-i12",
+        "id": "59449887-8ead-43d8-892b-5aa139fa3f6f",
+        "endedAt": "2026-09-06T00:16:42.567Z"
+      },
+      {
+        "startedAt": "2026-09-05T10:42:56.685Z",
+        "budgetMinutes": 20,
+        "policyVersion": "default",
+        "plannedItemIds": [
+          "seed-i12",
+          "seed-i4",
+          "seed-i5"
+        ],
+        "pretestItemId": "seed-i12",
+        "id": "5febad8e-4a9a-4572-b5b6-655bec6ff8da",
+        "endedAt": "2026-09-05T10:43:04.443Z"
+      },
       {
         "startedAt": "2026-09-05T10:42:33.091Z",
         "budgetMinutes": 20,
@@ -303,6 +1443,174 @@
         ],
         "pretestItemId": "seed-i11",
         "id": "6a8cddbe-15d4-4e69-89b6-7171489c5d92",
+        "endedAt": null
+      },
+      {
+        "startedAt": "2026-09-05T10:43:05.507Z",
+        "budgetMinutes": 20,
+        "policyVersion": "default",
+        "plannedItemIds": [],
+        "pretestItemId": null,
+        "id": "7212e223-f0a6-4405-b35d-45379081acdd",
+        "endedAt": "2026-09-05T10:43:06.267Z"
+      },
+      {
+        "startedAt": "2026-09-06T00:42:29.202Z",
+        "budgetMinutes": 20,
+        "policyVersion": "default",
+        "plannedItemIds": [
+          "089cdc21-18b3-47c8-ae39-16b4d3369adc",
+          "0c3032a4-81f6-46b5-a45f-67a8c6fbbf24",
+          "120ae225-a94c-462f-9696-812d38907560",
+          "3d58b557-3381-4ed1-8611-6f887234eb40",
+          "44fa3d1c-5579-42e2-961b-5415863330f2",
+          "506f5168-bdfc-4c3c-9ebe-bf956e486ce3",
+          "51d5281a-16d8-41be-8e5d-0a8f013801f8",
+          "52b8e66c-52a5-4151-9109-2c6cf6a6f9db",
+          "59d1211c-a3c6-4fc2-bddc-d0c64a9e49b6",
+          "59df7703-c60d-4483-964c-3e2113da02ff",
+          "5e179ac7-352c-4e0c-9fde-c850d7e8c3f5",
+          "5e3a47ff-0591-40c3-94f8-727eaf9757b8",
+          "5ffc185e-d13c-4263-ae94-057c1a214283",
+          "613f0f9d-bc40-448a-9409-f418b638cab1",
+          "6467bc51-2858-417a-a2d7-7b8b068afdbc",
+          "68e67991-6ca9-4f2a-8701-32d237bbf257",
+          "6c47395f-3fd7-4291-b409-4a9395e0abc4",
+          "71ef92e6-7be7-478c-9cb3-1564fd89618c",
+          "739e50a7-46dc-4b80-9ab1-a1eb673aaad8",
+          "73d488fb-6899-4cd3-a68a-e9b1219347a8",
+          "754e4202-2441-476f-b0f6-e05ac0a088dd",
+          "78e53814-4978-4e34-b5ef-9432b7448eca",
+          "7d334afb-c6cd-4d63-9b81-586babcf8c83",
+          "827cdfb3-0025-4121-a8a4-bd2b37b85ff0",
+          "82887366-7c6c-49e6-b6b6-05a9012fd91c",
+          "84601738-7bf9-48c5-bb12-a8afb9ee1421"
+        ],
+        "pretestItemId": null,
+        "id": "991f8e0b-d674-4f20-a7a8-06378505a039",
+        "endedAt": "2026-09-06T00:42:33.503Z"
+      },
+      {
+        "startedAt": "2026-09-06T00:16:42.569Z",
+        "budgetMinutes": 20,
+        "policyVersion": "default",
+        "plannedItemIds": [
+          "031620b2-ed6e-4e67-b8ae-999ab65adc20",
+          "03398736-5fcb-462d-ba55-610c53f96bf4",
+          "05e5b378-6d08-46d7-b002-7cff49799ab3",
+          "179691c0-d462-4f6f-9426-c6d30a77de6d",
+          "29b41849-dbd8-4fd4-863a-37fc94d7441d",
+          "2a21cf6e-0791-41ec-8bc3-a56ebd29c9db",
+          "2b598ed0-4a62-4a82-84e3-7acb5d469e94",
+          "31209ca6-96e9-49a3-b6fa-55f70ba14e62",
+          "3c1d2083-70c7-45d8-b11c-5c8a0d7a86d2",
+          "3d1ddd90-608c-4978-bbff-933aeba212fc",
+          "3d3aae17-4397-48a1-acba-cbbc68dbd4a1",
+          "3d58b557-3381-4ed1-8611-6f887234eb40",
+          "3f180f82-871c-404e-b9ae-1e9dad170f1e",
+          "4396d4e7-7c52-46bc-8bce-cb730c7fa172",
+          "44fa3d1c-5579-42e2-961b-5415863330f2",
+          "506f5168-bdfc-4c3c-9ebe-bf956e486ce3",
+          "51d5281a-16d8-41be-8e5d-0a8f013801f8",
+          "52b8e66c-52a5-4151-9109-2c6cf6a6f9db",
+          "53da691e-a2fd-4d25-abf8-db8ffdb8ecad",
+          "59d1211c-a3c6-4fc2-bddc-d0c64a9e49b6",
+          "59df7703-c60d-4483-964c-3e2113da02ff",
+          "5b3c63ca-7707-4710-b96f-737a1b1a1eac",
+          "5e179ac7-352c-4e0c-9fde-c850d7e8c3f5",
+          "5e3a47ff-0591-40c3-94f8-727eaf9757b8",
+          "5ffc185e-d13c-4263-ae94-057c1a214283",
+          "613f0f9d-bc40-448a-9409-f418b638cab1"
+        ],
+        "pretestItemId": null,
+        "id": "9b62d352-7251-4609-b25d-2d08ba6bacb0",
+        "endedAt": "2026-09-06T00:34:00.975Z"
+      },
+      {
+        "startedAt": "2026-09-05T22:11:29.655Z",
+        "budgetMinutes": 20,
+        "policyVersion": "default",
+        "plannedItemIds": [
+          "74a68882-239b-4273-aff7-ef7b0d22b881",
+          "7e65ef89-09a6-4f13-80a5-6ebdc5f7fbd1",
+          "9362b22d-49f8-4705-bfda-dfedeba84ae7",
+          "a4066bae-5954-4b59-9a0e-bedca4708143",
+          "fbc316e4-2699-41ed-9092-cb6b1918d650",
+          "004b4dcb-7bc8-46be-82d9-7f648bd4fd60",
+          "02dc1290-b246-4bf4-85fe-78f2f5687ad9",
+          "0675a17b-ee0d-42a7-a9f2-e38578c039c1",
+          "099a7684-f26a-4291-86f2-23ee7ba71646",
+          "0e40d94d-61e6-4aa2-87a7-3e863162093f",
+          "0e561a5c-7706-4bf0-b931-9c6092648f23",
+          "15d2ef0a-c828-4b15-a4f9-92e3d0c40906",
+          "182bd169-9bd5-44f6-8753-7d2d63c23000",
+          "1bcd5c4e-30b7-4163-8940-c37c599d4974",
+          "1c7b6c02-28f8-481d-a03d-6fae966c6417",
+          "1d26fb08-7b4c-4f46-bbe7-0328239d44de",
+          "21adb27d-1e0d-49a9-80fb-49214a2b89de",
+          "271fcd40-fde5-46e4-9a54-cd090d5bbbd3",
+          "2757e6e7-aeb5-4364-be0e-50eddddf37dc",
+          "276377dc-07f5-4935-a146-db4a021faa43",
+          "278d9f94-41b2-4c0d-af9f-f5b738ea865f",
+          "2956991f-83d6-49fe-87b1-12d84d679033",
+          "3ca5d123-3915-4c1b-968e-c0a491cabc48",
+          "41b2f7a7-3469-4e93-a219-e5f77341d537",
+          "420ed979-0a8f-452c-9b9b-8070a71bda4f",
+          "45aa8d85-9e95-40ed-ba57-961664b5bbef"
+        ],
+        "pretestItemId": null,
+        "id": "a05c0414-4bc3-4f0c-9cd0-074587953cd1",
+        "endedAt": "2026-09-05T23:35:59.465Z"
+      },
+      {
+        "startedAt": "2026-09-05T12:07:39.306Z",
+        "budgetMinutes": 20,
+        "policyVersion": "default",
+        "plannedItemIds": [
+          "seed-i13",
+          "seed-i3",
+          "seed-i4",
+          "seed-i5",
+          "seed-i2"
+        ],
+        "pretestItemId": "seed-i13",
+        "id": "bd8cfca7-9abf-40b6-b4a4-2bb8af8baf84",
+        "endedAt": "2026-09-05T22:11:29.653Z"
+      },
+      {
+        "startedAt": "2026-09-06T00:42:33.506Z",
+        "budgetMinutes": 20,
+        "policyVersion": "default",
+        "plannedItemIds": [
+          "089cdc21-18b3-47c8-ae39-16b4d3369adc",
+          "0c3032a4-81f6-46b5-a45f-67a8c6fbbf24",
+          "120ae225-a94c-462f-9696-812d38907560",
+          "3d58b557-3381-4ed1-8611-6f887234eb40",
+          "44fa3d1c-5579-42e2-961b-5415863330f2",
+          "506f5168-bdfc-4c3c-9ebe-bf956e486ce3",
+          "51d5281a-16d8-41be-8e5d-0a8f013801f8",
+          "52b8e66c-52a5-4151-9109-2c6cf6a6f9db",
+          "59d1211c-a3c6-4fc2-bddc-d0c64a9e49b6",
+          "59df7703-c60d-4483-964c-3e2113da02ff",
+          "5e179ac7-352c-4e0c-9fde-c850d7e8c3f5",
+          "5e3a47ff-0591-40c3-94f8-727eaf9757b8",
+          "5ffc185e-d13c-4263-ae94-057c1a214283",
+          "613f0f9d-bc40-448a-9409-f418b638cab1",
+          "6467bc51-2858-417a-a2d7-7b8b068afdbc",
+          "68e67991-6ca9-4f2a-8701-32d237bbf257",
+          "6c47395f-3fd7-4291-b409-4a9395e0abc4",
+          "71ef92e6-7be7-478c-9cb3-1564fd89618c",
+          "739e50a7-46dc-4b80-9ab1-a1eb673aaad8",
+          "73d488fb-6899-4cd3-a68a-e9b1219347a8",
+          "754e4202-2441-476f-b0f6-e05ac0a088dd",
+          "78e53814-4978-4e34-b5ef-9432b7448eca",
+          "7d334afb-c6cd-4d63-9b81-586babcf8c83",
+          "827cdfb3-0025-4121-a8a4-bd2b37b85ff0",
+          "82887366-7c6c-49e6-b6b6-05a9012fd91c",
+          "84601738-7bf9-48c5-bb12-a8afb9ee1421"
+        ],
+        "pretestItemId": null,
+        "id": "eb608ee9-3484-4954-920d-b71aab303963",
         "endedAt": null
       }
     ]
