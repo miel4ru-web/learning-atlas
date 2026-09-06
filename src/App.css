@@ -8,11 +8,30 @@
   margin: 0 auto;
   padding: 28px 18px 72px;
   display: grid;
+  /* minmax(0, …): 그리드 트랙 기본값(min-width:auto)이면 stat-grid·forecast·가로
+     스크롤 위젯의 min-content 폭이 트랙을 뷰포트보다 넓게 벌려 좁은 화면에서
+     본문 전체가 가로로 삐져나간다 — 트랙 하한을 0으로 눌러 넘침을 막는다. */
+  grid-template-columns: minmax(0, 1fr);
   gap: 18px;
   align-content: start;
+  overflow-wrap: break-word;
 }
 
-.view { display: grid; gap: 20px; }
+.view { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; }
+
+/* 좁은 화면 가로 넘침 방지: 중첩 그리드 트랙 하한을 0으로, 가로 스크롤
+   컨테이너는 스스로 폭을 넓히지 않도록 min-width를 0으로 고정한다. */
+.cards-layout,
+.cards-forms,
+.cards-main,
+.item-form,
+.kc-form,
+.free-text-form,
+.code-editor { grid-template-columns: minmax(0, 1fr); }
+.accuracy-trend-scroll,
+.kc-graph-scroll,
+.refit-result .scroll,
+.tabbar { min-width: 0; }
 
 .update-banner {
   display: flex;
@@ -1054,3 +1073,71 @@
 }
 .quality-broken { border: 1px solid var(--again); color: var(--again); }
 .quality-too-easy { border: 1px solid var(--easy); color: var(--easy); }
+
+/* ---- 모바일: 폰트 가시성 + 줄 넘침 방지 ----
+   좁은 화면에서 0.7~0.85rem 잔글씨가 너무 작고 흐릿해 읽기 어려웠다.
+   최소 크기를 올리고, 흐린 회색 본문 대비를 높이며, 한국어 단어가
+   중간에서 잘리지 않도록 어절 단위(keep-all)로 줄바꿈한다. */
+@media (max-width: 640px) {
+  :root { --text-muted: #5f5d54; }
+
+  .shell {
+    padding: 22px 16px 72px;
+    /* 한국어: 어절 안에서 끊지 않고 공백에서만 줄바꿈. 아주 긴 토큰(URL 등)은
+       break-word가 받아 컨테이너 밖으로 나가지 않게 한다. */
+    word-break: keep-all;
+    overflow-wrap: break-word;
+  }
+
+  .tab { font-size: 0.95rem; padding: 11px 14px; }
+  .topbar h1 { font-size: 1.3rem; }
+  .stat-line { font-size: 0.95rem; }
+
+  /* 대시보드 통계 4열 → 2열: 4열이면 한 칸이 ~85px라 값·라벨이 눌린다. */
+  .stat-grid { grid-template-columns: 1fr 1fr; }
+  .stat-value { font-size: 1.3rem; }
+  .stat-label { font-size: 0.8rem; }
+
+  /* 잔글씨 본문·목록·설명: 하한 0.9rem, 줄간격 1.6 */
+  .muted,
+  .panel p,
+  .session-log li,
+  .kc-list li,
+  .misconceptions li,
+  .error-tag-distribution li,
+  .slow-items li,
+  .leeches li,
+  .quality-flags li,
+  .sync-block p,
+  .csv-block p,
+  .study-prefs,
+  .seed-note,
+  .pretest-note p,
+  .reminder-caveat,
+  .import-mode,
+  .free-text-hint,
+  .mcq-tag-help,
+  .refit-note { font-size: 0.9rem; line-height: 1.6; }
+
+  .sync-form label { font-size: 0.85rem; }
+  .band-legend,
+  .kc-prereq-picker,
+  .deck-count,
+  .deck-filter .deck-search,
+  .deck-filter select { font-size: 0.85rem; }
+
+  /* 딱지류: 0.7rem → 0.75rem */
+  .leech-badge,
+  .error-tag-badge,
+  .deck-type,
+  .band-badge,
+  .quality-badge,
+  .kc-badge,
+  .kc-badge-sm,
+  .pretest-badge,
+  .session-open { font-size: 0.75rem; }
+
+  .card { padding: 32px 20px; }
+  .card-front { font-size: 1.2rem; }
+  .card-back { font-size: 1.05rem; }
+}
